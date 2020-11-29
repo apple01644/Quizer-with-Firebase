@@ -15,6 +15,7 @@ class QuizEdit extends Component {
       <Button
         className='mt-2'
         size='sm'
+        variant='danger'
         onClick={() => {
           this.props.setpage('quiz_list');
         }}
@@ -59,7 +60,12 @@ class QuizEdit extends Component {
                         }}
                       >
                         {btn_back}
-                        <Button className='mt-2 ml-2' size='sm' type='Submit'>
+                        <Button
+                          className='mt-2 ml-2'
+                          size='sm'
+                          type='Submit'
+                          variant='success'
+                        >
                           Save Changes
                         </Button>
                         <br />

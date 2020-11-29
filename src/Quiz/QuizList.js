@@ -1,10 +1,20 @@
 import 'firebase/database';
-import { Card, Button } from 'react-bootstrap';
+import { Card, Button, Form } from 'react-bootstrap';
 import { FirebaseDatabaseNode } from '@react-firebase/database';
 const { Component } = require('react');
 
 class QuizList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
   render() {
+    const handleChange = (e) => {
+      const { id, value } = e.target;
+      this.setState({
+        [id]: value,
+      });
+    };
     return (
       <div className='my-auto'>
         <FirebaseDatabaseNode path='posts/'>
@@ -13,32 +23,55 @@ class QuizList extends Component {
               return <>Loading...</>;
             return (
               <>
+                {this.props.auth.isSignedIn ? (
+                  <Button
+                    className='mt-2 '
+                    size='sm'
+                    onClick={() => {
+                      this.props.setpage('quiz_new');
+                    }}
+                  >
+                    New
+                  </Button>
+                ) : null}
                 <Button
-                  className='mt-2 '
+                  className='mt-2 ml-2'
                   size='sm'
                   onClick={() => {
-                    this.props.setpage('quiz_new');
+                    const quizzes = [];
+                    Object.entries(this.state).forEach(([key, value]) => {
+                      if (value) quizzes.push(key);
+                    });
+                    if (quizzes.length > 0)
+                      this.props.setpage('quiz_game', { list: quizzes });
                   }}
                 >
-                  New
+                  Start Quiz
                 </Button>
-                <div className='my-3'>
+                <Form className='my-3'>
                   {Object.entries(d.value).map(([idx, post]) => (
-                    <Card
-                      className='mx-3 my-2'
-                      key={idx}
-                      onClick={() => {
-                        this.props.setpage('quiz_view', { idx: idx });
-                      }}
-                    >
-                      <Card.Body>{post.title}</Card.Body>
+                    <Card className='mx-3 my-2' key={idx}>
+                      <Form.Group
+                        controlId={`${idx}`}
+                        className='d-flex flex-row justify-content-center align-items-center m-0'
+                      >
+                        <Form.Check type='checkbox' onChange={handleChange} />
+                        <Button
+                          variant='white'
+                          onClick={() => {
+                            this.props.setpage('quiz_view', { idx: idx });
+                          }}
+                        >
+                          {post.title}
+                        </Button>
+                      </Form.Group>
                     </Card>
                   ))}
-                </div>
+                </Form>
               </>
             );
           }}
-        </FirebaseDatabaseNode>{' '}
+        </FirebaseDatabaseNode>
       </div>
     );
   }

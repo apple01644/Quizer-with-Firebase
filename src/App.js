@@ -5,6 +5,7 @@ import { QuizList } from './Quiz/QuizList';
 import { QuizView } from './Quiz/QuizView';
 import { QuizEdit } from './Quiz/QuizEdit';
 import { QuizNew } from './Quiz/QuizNew';
+import { QuizGame } from './Quiz/QuizGame';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import { FirebaseDatabaseProvider } from '@react-firebase/database';
@@ -12,7 +13,6 @@ import {
   FirebaseAuthConsumer,
   FirebaseAuthProvider,
 } from '@react-firebase/auth';
-
 
 const firebaseConfig = require('./FirebaseConfig.json');
 
@@ -41,16 +41,7 @@ class TopMenu extends Component {
               firebase.auth().signInWithPopup(googleAuthProvider);
             }}
           >
-            Login with Google
-          </Button>
-          <Button
-            variant='outline-light'
-            className='ml-3'
-            onClick={() => {
-              firebase.auth().signInAnonymously();
-            }}
-          >
-            Just go
+            Login
           </Button>
         </div>
       );
@@ -61,7 +52,7 @@ class TopMenu extends Component {
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { page: 'quiz_list', pagedata: null };
+    this.state = { page: 'quiz_list', pagedata: {} };
   }
   render() {
     return (
@@ -101,6 +92,15 @@ class App extends Component {
                   ) : null}
                   {this.state.page === 'quiz_new' ? (
                     <QuizNew
+                      auth={auth}
+                      pagedata={this.state.pagedata}
+                      setpage={(page, pagedata) => {
+                        this.setState({ page: page, pagedata: pagedata });
+                      }}
+                    />
+                  ) : null}
+                  {this.state.page === 'quiz_game' ? (
+                    <QuizGame
                       auth={auth}
                       pagedata={this.state.pagedata}
                       setpage={(page, pagedata) => {

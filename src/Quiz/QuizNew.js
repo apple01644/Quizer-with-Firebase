@@ -11,6 +11,7 @@ class QuizNew extends Component {
     const btn_back = (
       <Button
         className='mt-2'
+        variant='danger'
         size='sm'
         onClick={() => {
           this.props.setpage('quiz_list');
@@ -48,7 +49,12 @@ class QuizNew extends Component {
                   }}
                 >
                   {btn_back}
-                  <Button className='mt-2 ml-2' size='sm' type='Submit'>
+                  <Button
+                    className='mt-2 ml-2'
+                    size='sm'
+                    type='Submit'
+                    variant='success'
+                  >
                     Create Quiz
                   </Button>
                   <br />
