@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "posts": {
+      ".read": "true",
+      "$post_id": {
+        ".write": "!data.exists() || data.child('uid').val() === auth.uid",
+        ".read": "true",
+        "title": { ".validate": true },
+        "md": { ".validate": true },
+        "uid": { ".validate": true },
+        "$other": { ".validate": false },
+        ".validate": "!data.exists() || (data.child('uid').exists() && data.child('uid').val() === auth.uid && data.child('title').exists() && data.child('title').isString() && data.child('md').exists() && data.child('md').isString())"
+      }
+    }
+  }
+}
