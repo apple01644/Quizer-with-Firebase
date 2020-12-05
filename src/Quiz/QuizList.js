@@ -37,6 +37,7 @@ class QuizList extends Component {
                 <Button
                   className='mt-2 ml-2'
                   size='sm'
+                  variant='info'
                   onClick={() => {
                     const quizzes = [];
                     Object.entries(this.state).forEach(([key, value]) => {
@@ -49,21 +50,30 @@ class QuizList extends Component {
                   Start Quiz
                 </Button>
                 <Form className='my-3'>
-                  {Object.entries(d.value).map(([idx, post]) => (
-                    <Card className='mx-3 my-2' key={idx}>
+                  {Object.entries(d.value).map(([idx, post], incr) => (
+                    <Card
+                      className={
+                        (incr > 0 ? 'border-top-0' : '') + ' mx-3 my-0'
+                      }
+                      key={idx}
+                    >
                       <Form.Group
                         controlId={`${idx}`}
-                        className='d-flex flex-row justify-content-center align-items-center m-0'
+                        className='d-flex flex-row align-items-center m-0'
                       >
                         <Form.Check type='checkbox' onChange={handleChange} />
-                        <Button
-                          variant='white'
-                          onClick={() => {
-                            this.props.setpage('quiz_view', { idx: idx });
-                          }}
-                        >
-                          {post.title}
-                        </Button>
+                        <div className='flex-fill '>
+                          <Button
+                            className='px-0 py-1'
+                            variant='white'
+                            size='sm'
+                            onClick={() => {
+                              this.props.setpage('quiz_view', { idx: idx });
+                            }}
+                          >
+                            {post.title}
+                          </Button>
+                        </div>
                       </Form.Group>
                     </Card>
                   ))}
