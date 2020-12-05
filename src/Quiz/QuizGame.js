@@ -26,6 +26,29 @@ class QuizGame extends Component {
       quiz_list: shuffleArray(Array.from(props.pagedata.list)),
     };
   }
+
+  goNextQuestion() {
+    let post = null;
+    if (this.state.quiz_list.length > 1) {
+      const old_list = Array.from(this.state.quiz_list);
+      old_list.shift();
+      this.setState({
+        quiz_list: old_list,
+      });
+      post = this.state.posts[old_list[0]];
+    } else {
+      const new_list = shuffleArray(Array.from(this.state.all_quizes));
+      this.setState({
+        show_modal: true,
+        quiz_list: new_list,
+      });
+      post = this.state.posts[new_list[0]];
+    }
+    this.setState({
+      play_post: post,
+    });
+  }
+
   render() {
     console.log('state', this.state.play_post);
     return (
@@ -43,25 +66,7 @@ class QuizGame extends Component {
           className='mt-2 ml-2'
           size='sm'
           onClick={() => {
-            let post = null;
-            if (this.state.quiz_list.length > 1) {
-              const old_list = Array.from(this.state.quiz_list);
-              old_list.shift();
-              this.setState({
-                quiz_list: old_list,
-              });
-              post = this.state.posts[old_list[0]];
-            } else {
-              const new_list = shuffleArray(Array.from(this.state.all_quizes));
-              this.setState({
-                show_modal: true,
-                quiz_list: new_list,
-              });
-              post = this.state.posts[new_list[0]];
-            }
-            this.setState({
-              play_post: post,
-            });
+            this.goNextQuestion();
           }}
         >
           Next Quiz
@@ -104,7 +109,10 @@ class QuizGame extends Component {
         {this.state.play_post != null ? (
           <div className='mt-3'>
             <Card.Title>{this.state.play_post.title}</Card.Title>
-            <QuizPlay value={this.state.play_post.md} />
+            <QuizPlay
+              value={this.state.play_post.md}
+              goNextQuestion={() => this.goNextQuestion()}
+            />
           </div>
         ) : null}
       </div>
