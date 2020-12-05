@@ -55,7 +55,9 @@ class QuizEdit extends Component {
                           };
                           (async () => {
                             await runMutation(new_post);
-                            this.props.setpage('quiz_list');
+                            this.props.setpage('quiz_view', {
+                              idx: this.props.pagedata.idx,
+                            });
                           })();
                         }}
                       >
