@@ -164,7 +164,9 @@ class QuizView extends Component {
             <Card className='mh-100'>
               {this.state.post !== null ? (
                 <Card.Body>
-                  <Card.Title>{this.state.post.title}</Card.Title>
+                  <Card.Title className='font-weight-bold'>
+                    {this.state.post.title}
+                  </Card.Title>
                   <MarkdownReader
                     value={this.state.post.md}
                     ref={this.markdown_reader}
