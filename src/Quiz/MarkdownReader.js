@@ -44,7 +44,10 @@ class MarkdownReader extends Component {
         this.dom.push(buffer);
         this.dom.push(<br key={idx} />);
         buffer = '';
-      } else buffer += ch;
+      } else {
+        if (is_text) buffer += ch;
+        else if (ch !== '\\') buffer += ch;
+      }
       idx += 1;
     }
     if (buffer.length > 0) this.dom.push(buffer);
