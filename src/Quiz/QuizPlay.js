@@ -31,11 +31,30 @@ class QuizPlay extends Component {
         is_text = false;
       } else if (ch === '>' && !is_text) {
         buffer.toLowerCase();
-        this.blocks.push(['button', buffer, answers.length]);
+
+        let real_answer = '';
+        let hint = '';
+        let is_prehint = false;
+
+        for (let k = 0; k < buffer.length; ++k) {
+          if (buffer[k] === '\\') is_prehint = true;
+          else {
+            if (is_prehint) {
+              is_prehint = false;
+              real_answer += buffer[k];
+              hint += buffer[k];
+            } else {
+              real_answer += buffer[k];
+              hint += buffer[k] === ' ' ? '.' : '●';
+            }
+          }
+        }
+
+        this.blocks.push(['button', real_answer, answers.length]);
         this.quiz_buttons.push(createRef());
-        real_answers.push(buffer);
+        real_answers.push(real_answer);
         answers.push('');
-        hints.push(formatAnswer('', buffer));
+        hints.push(hint);
         buffer = '';
         is_text = true;
       } else if (ch === '\n' && is_text) {
@@ -45,6 +64,7 @@ class QuizPlay extends Component {
       } else buffer += ch;
     }
     if (buffer.length > 0) this.blocks.push(['text', buffer]);
+
     if (first === true) {
       this.state = {
         holding_index: 0,
@@ -180,12 +200,12 @@ class QuizPlay extends Component {
           className='border-bottom border-secondary my-2 px-3 text-left'
           ref={this.quiz_view}
         >
-          {this.blocks.map((pair) => {
+          {this.blocks.map((pair, idx) => {
             if (pair[0] === 'text') return pair[1];
             else if (pair[0] === 'button') {
               return (
                 <Button
-                  key={pair[2]}
+                  key={idx}
                   ref={this.quiz_buttons[pair[2]]}
                   variant={
                     pair[2] === this.state.holding_index
@@ -204,14 +224,14 @@ class QuizPlay extends Component {
                   }}
                   style={
                     pair[1] === this.state.user_answers[pair[2]]
-                      ? { 'point-events': 'none' }
+                      ? { pointEvents: 'none' }
                       : {}
                   }
                 >
                   {formatAnswer(this.state.user_answers[pair[2]], pair[1])}
                 </Button>
               );
-            } else if (pair[0] === 'br') return <br />;
+            } else if (pair[0] === 'br') return <br key={idx} />;
             else return null;
           })}
         </DocumentViewWithScroll>
