@@ -42,7 +42,7 @@ class MarkdownReader extends Component {
         is_text = true;
       } else if (ch === '\n' && is_text) {
         this.dom.push(buffer);
-        this.dom.push(<br />);
+        this.dom.push(<br key={idx} />);
         buffer = '';
       } else buffer += ch;
       idx += 1;
@@ -57,7 +57,7 @@ class MarkdownReader extends Component {
   }
 
   render() {
-    return <>{this.dom}</>;
+    return <div className='text-left'>{this.dom}</div>;
   }
 }
 
