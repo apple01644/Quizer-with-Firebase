@@ -80,11 +80,6 @@ class QuizPlay extends Component {
     const user_answer = e.target.value || '';
     const real_answer = this.state.real_answers[this.state.holding_index];
 
-    console.log(
-      e.target.value,
-      e.target.value.indexOf('.'),
-      e.target.value.replaceAll('.', '')
-    );
     if (e.target.value.indexOf('.') !== -1) {
       e.target.value = e.target.value.replaceAll('.', '');
       this.getHint();

@@ -50,7 +50,6 @@ class QuizGame extends Component {
   }
 
   render() {
-    console.log('state', this.state.play_post);
     return (
       <div className='my-auto'>
         <Button
