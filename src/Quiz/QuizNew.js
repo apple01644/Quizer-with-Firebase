@@ -70,11 +70,7 @@ class QuizNew extends Component {
                   </Form.Group>
                   <Form.Group controlId='category'>
                     <Form.Label>카테고리</Form.Label>
-                    <Form.Control
-                      type='text'
-                      defaultValue={post.category || ''}
-                      onChange={handleChange}
-                    />
+                    <Form.Control type='text' onChange={handleChange} />
                   </Form.Group>
                   <Form.Group controlId='md'>
                     <Form.Label>{'내용(가릴 부분은 <, >로 감싸기)'}</Form.Label>
