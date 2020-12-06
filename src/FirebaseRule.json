@@ -5,14 +5,15 @@
       "$post_id": {
         ".write": "!data.exists() || data.child('uid').val() === auth.uid",
         ".read": "true",
-        "title": { ".validate": "data.exists() && data.isString()" },
-        "md": { ".validate": "data.exists() && data.isString()" },
-        "uid": { ".validate": "data.exists() && data.val() === auth.uid" },
+        ".validate": "!(data.child('uid').exists()) || data.child('uid').val() === auth.uid",
+
+        "title": { ".validate": "newData.isString()" },
+        "md": { ".validate": "newData.isString()" },
+        "uid": { ".validate": "!data.exists() || data.val() === auth.uid" },
         "category": {
-          ".validate": "!data.exists() || data.isString()"
+          ".validate": "!newData.exists() || newData.isString()"
         },
-        "$other": { ".validate": false },
-        ".validate": "data.child('uid').exists() && data.child('uid').val() === auth.uid"
+        "$other": { ".validate": false }
       }
     }
   }
