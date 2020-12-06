@@ -9,7 +9,7 @@
         "md": { ".validate": "data.exists() && data.isString()" },
         "uid": { ".validate": "data.exists() && data.val() === auth.uid" },
         "category": {
-          ".validate": "(!data.exists()) || data.child('category').isString()"
+          ".validate": "!data.exists() || data.isString()"
         },
         "$other": { ".validate": false },
         ".validate": "data.child('uid').exists() && data.child('uid').val() === auth.uid"
