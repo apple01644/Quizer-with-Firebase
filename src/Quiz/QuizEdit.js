@@ -17,7 +17,8 @@ class QuizEdit extends Component {
         size='sm'
         variant='danger'
         onClick={() => {
-          this.props.setpage('quiz_list');
+          if (window.confirm('Do you really want to discard changes?'))
+            this.props.setpage('quiz_list');
         }}
       >
         Back to List

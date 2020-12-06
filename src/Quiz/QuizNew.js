@@ -14,7 +14,8 @@ class QuizNew extends Component {
         variant='danger'
         size='sm'
         onClick={() => {
-          this.props.setpage('quiz_list');
+          if (window.confirm('Do you really want to cancel creating new quiz?'))
+            this.props.setpage('quiz_list');
         }}
       >
         Back to List
