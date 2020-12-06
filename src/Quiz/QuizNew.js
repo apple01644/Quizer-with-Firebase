@@ -5,12 +5,12 @@ const { Component } = require('react');
 class QuizNew extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { category: null };
   }
   render() {
     const btn_back = (
       <Button
-        className='mt-2'
+        className=' mb-2'
         variant='danger'
         size='sm'
         onClick={() => {
@@ -51,7 +51,7 @@ class QuizNew extends Component {
                 >
                   {btn_back}
                   <Button
-                    className='mt-2 ml-2'
+                    className='ml-2 mb-2'
                     size='sm'
                     type='Submit'
                     variant='success'
@@ -59,20 +59,23 @@ class QuizNew extends Component {
                     Create Quiz
                   </Button>
                   <br />
-                  <Form.Group controlId='title'>
-                    <Form.Label>제목</Form.Label>
+                  <Form.Group controlId='title' className='mb-2'>
                     <Form.Control
                       type='text'
                       placeholder='여기에 제목 입력'
                       onChange={handleChange}
+                      className='py-0'
                     />
                   </Form.Group>
-                  <Form.Group controlId='category'>
-                    <Form.Label>카테고리</Form.Label>
-                    <Form.Control type='text' onChange={handleChange} />
+                  <Form.Group controlId='category' className='mb-2'>
+                    <Form.Control
+                      type='text'
+                      placeholder='여기에 카테고리 입력'
+                      onChange={handleChange}
+                      className='py-0'
+                    />
                   </Form.Group>
-                  <Form.Group controlId='md'>
-                    <Form.Label>{'내용(가릴 부분은 <, >로 감싸기)'}</Form.Label>
+                  <Form.Group controlId='md' className='mb-2'>
                     <Form.Control
                       as='textarea'
                       rows={8}
