@@ -40,6 +40,7 @@ class QuizNew extends Component {
                     const new_post = {
                       title: this.state.title,
                       md: this.state.md,
+                      category: this.state.category,
                       uid: this.props.auth.user.uid,
                     };
                     console.log(new_post);
@@ -64,6 +65,14 @@ class QuizNew extends Component {
                     <Form.Control
                       type='text'
                       placeholder='여기에 제목 입력'
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId='category'>
+                    <Form.Label>카테고리</Form.Label>
+                    <Form.Control
+                      type='text'
+                      defaultValue={post.category || ''}
                       onChange={handleChange}
                     />
                   </Form.Group>

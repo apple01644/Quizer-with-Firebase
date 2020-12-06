@@ -52,6 +52,7 @@ class QuizEdit extends Component {
                           const new_post = {
                             title: this.state.title || post.title,
                             md: this.state.md || post.md,
+                            category: this.state.category || post.category,
                             uid: post.uid,
                           };
                           (async () => {
@@ -77,6 +78,14 @@ class QuizEdit extends Component {
                           <Form.Control
                             type='text'
                             defaultValue={post.title}
+                            onChange={handleChange}
+                          />
+                        </Form.Group>
+                        <Form.Group controlId='category'>
+                          <Form.Label>카테고리</Form.Label>
+                          <Form.Control
+                            type='text'
+                            defaultValue={post.category || ''}
                             onChange={handleChange}
                           />
                         </Form.Group>
