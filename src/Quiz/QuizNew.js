@@ -43,7 +43,6 @@ class QuizNew extends Component {
                       category: this.state.category,
                       uid: this.props.auth.user.uid,
                     };
-                    console.log(new_post);
                     (async () => {
                       await runMutation(new_post);
                       this.props.setpage('quiz_list');
