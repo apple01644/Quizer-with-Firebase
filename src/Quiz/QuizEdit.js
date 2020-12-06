@@ -8,7 +8,7 @@ const { Component } = require('react');
 class QuizEdit extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { category: null };
   }
   render() {
     const btn_back = (
@@ -52,7 +52,10 @@ class QuizEdit extends Component {
                           const new_post = {
                             title: this.state.title || post.title,
                             md: this.state.md || post.md,
-                            category: this.state.category || post.category,
+                            category:
+                              this.state.category === ''
+                                ? null
+                                : this.state.category,
                             uid: post.uid,
                           };
                           (async () => {
@@ -85,7 +88,7 @@ class QuizEdit extends Component {
                           <Form.Label>카테고리</Form.Label>
                           <Form.Control
                             type='text'
-                            defaultValue={post.category || ''}
+                            defaultValue={post.category}
                             onChange={handleChange}
                           />
                         </Form.Group>
