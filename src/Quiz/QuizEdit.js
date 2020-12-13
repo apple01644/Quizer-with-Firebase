@@ -8,7 +8,7 @@ const { Component } = require('react');
 class QuizEdit extends Component {
   constructor(props) {
     super(props);
-    this.state = { category: null };
+    this.state = {};
   }
   render() {
     const btn_back = (
@@ -37,6 +37,7 @@ class QuizEdit extends Component {
             if (d.isLoading === null || d.isLoading || d.value === null)
               return <>Loading...</>;
             const post = d.value;
+            if (post.category === undefined) post.category = null;
             return (
               <FirebaseDatabaseMutation
                 path={`posts/${this.props.pagedata.idx}`}
@@ -52,12 +53,18 @@ class QuizEdit extends Component {
                           const new_post = {
                             title: this.state.title || post.title,
                             md: this.state.md || post.md,
-                            category:
-                              this.state.category === ''
-                                ? null
-                                : this.state.category,
+                            category: post.category,
                             uid: post.uid,
                           };
+                          if (this.state.category !== undefined)
+                            new_post.category = this.state.category;
+                          if (
+                            new_post.category !== null &&
+                            new_post.category.length === 0
+                          )
+                            new_post.category = null;
+                          console.log(this.state);
+                          console.log(new_post);
                           (async () => {
                             await runMutation(new_post);
                             this.props.setpage('quiz_view', {
