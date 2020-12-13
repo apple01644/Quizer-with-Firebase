@@ -7,6 +7,7 @@ const MaskedHint = styled.div`
 const DocumentViewWithScroll = styled.div`
   height: 19rem;
   overflow-y: scroll;
+  white-space: pre-wrap;
 `;
 
 const UserAnswerInput = styled.input`

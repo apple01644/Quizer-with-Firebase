@@ -60,7 +60,11 @@ class MarkdownReader extends Component {
   }
 
   render() {
-    return <div className='text-left'>{this.dom}</div>;
+    return (
+      <div className='text-left' style={{ 'white-space': 'pre-wrap' }}>
+        {this.dom}
+      </div>
+    );
   }
 }
 
