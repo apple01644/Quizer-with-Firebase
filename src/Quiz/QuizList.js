@@ -18,11 +18,11 @@ class QuizList extends Component {
       });
     };
 
-    const categories = { other: [] };
+    const categories = { '0.other': [] };
     Object.entries(posts_db).forEach(([post_id, post], incr) => {
       this.checkboxes[post_id] = this.checkboxes[post_id] || createRef();
-      let category = post.category || 'other';
-      if (category.length === 0) category = 'other';
+      let category = post.category || '0.other';
+      if (category.length === 0) category = '0.other';
 
       if (!(category in categories)) categories[category] = [];
       categories[category].push([post_id, post]);
