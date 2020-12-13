@@ -130,9 +130,9 @@ class QuizPlay extends Component {
       user_answer === real_answer &&
       this.state.holding_index + 1 < answers.length
     ) {
-      this.quiz_view.current.scrollTop =
+      this.quiz_view.current.scrollTop +=
         this.quiz_buttons[this.state.holding_index + 1].current.offsetTop -
-        this.quiz_view.current.offsetTop;
+        this.quiz_buttons[this.state.holding_index].current.offsetTop;
       this.setState({
         holding_index: this.state.holding_index + 1,
         answer_input: '',
@@ -175,9 +175,9 @@ class QuizPlay extends Component {
     });
 
     if (this.state.holding_index + 1 < answers.length) {
-      this.quiz_view.current.scrollTop =
+      this.quiz_view.current.scrollTop +=
         this.quiz_buttons[this.state.holding_index + 1].current.offsetTop -
-        this.quiz_view.current.offsetTop;
+        this.quiz_buttons[this.state.holding_index].current.offsetTop;
       this.setState({
         holding_index: this.state.holding_index + 1,
         answer_input: '',
