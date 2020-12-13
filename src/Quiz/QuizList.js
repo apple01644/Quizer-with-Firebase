@@ -28,15 +28,22 @@ class QuizList extends Component {
       categories[category].push([post_id, post]);
     });
 
-    for (const category_name in categories) {
-      categories[category_name].sort((a, b) =>
+    const ordered_categories = {};
+    Object.keys(categories)
+      .sort()
+      .forEach(function (key) {
+        ordered_categories[key] = categories[key];
+      });
+
+    for (const category_name in ordered_categories) {
+      ordered_categories[category_name].sort((a, b) =>
         a[1].title.localeCompare(b[1].title)
       );
     }
 
     return (
       <Accordion defaultActiveKey='0'>
-        {Object.entries(categories).map(
+        {Object.entries(ordered_categories).map(
           ([category_name, posts], category_id) => (
             <Card key={category_id} className='border-0 rounded-0"'>
               <div className='d-flex flex-row bg-success align-items-center'>
