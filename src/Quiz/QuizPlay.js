@@ -241,26 +241,31 @@ class QuizPlay extends Component {
             className='d-flex flex-row justify-content-center'
             onClick={() => this.getHint()}
           >
-            {this.state.hints[this.state.holding_index]
-              .split('')
-              .map((ch, idx) => {
-                if (
-                  this.state.real_answers[this.state.holding_index][idx] ===
-                    this.state.user_answers[this.state.holding_index][idx] &&
-                  this.state.real_answers[this.state.holding_index][idx] !== ' '
-                )
-                  return (
-                    <div key={idx} className='text-success m-0 p-0'>
-                      {ch}
-                    </div>
-                  );
-                else
-                  return (
-                    <MaskedHint key={idx} className='text-danger m-0 p-0'>
-                      {ch}
-                    </MaskedHint>
-                  );
-              })}
+            {this.state.hints.length > 0
+              ? this.state.hints[this.state.holding_index]
+                  .split('')
+                  .map((ch, idx) => {
+                    if (
+                      this.state.real_answers[this.state.holding_index][idx] ===
+                        this.state.user_answers[this.state.holding_index][
+                          idx
+                        ] &&
+                      this.state.real_answers[this.state.holding_index][idx] !==
+                        ' '
+                    )
+                      return (
+                        <div key={idx} className='text-success m-0 p-0'>
+                          {ch}
+                        </div>
+                      );
+                    else
+                      return (
+                        <MaskedHint key={idx} className='text-danger m-0 p-0'>
+                          {ch}
+                        </MaskedHint>
+                      );
+                  })
+              : null}
           </Button>
           <div className='justify-content-between mt-2'>
             <UserAnswerInput
@@ -269,6 +274,12 @@ class QuizPlay extends Component {
               placeholder='Type answer'
               value={this.state.answer_input}
               onChange={(e) => this.setUserAnswer(e)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  if (this.didAnswerAllQuestions()) this.props.goNextQuestion();
+                  else this.passQuestion();
+                }
+              }}
             />
             {this.state.real_answers !== undefined &&
             this.didAnswerAllQuestions() ? (
