@@ -3,12 +3,14 @@ import {
   FirebaseDatabaseMutation,
 } from '@react-firebase/database';
 import { Form, Button } from 'react-bootstrap';
-const { Component } = require('react');
+import { Component, createRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 class QuizEdit extends Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.markdown_viewer = createRef();
   }
   render() {
     const btn_back = (
@@ -107,10 +109,17 @@ class QuizEdit extends Component {
                             as='textarea'
                             rows={8}
                             defaultValue={post.md}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                              handleChange(e);
+                              console.log(e, this.markdown_viewer);
+                            }}
                           />
                         </Form.Group>
                       </Form>
+                      <ReactMarkdown
+                        className='border'
+                        ref={this.markdown_viewer}
+                      />
                     </div>
                   );
                 }}

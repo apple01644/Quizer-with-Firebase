@@ -1,119 +1,89 @@
 import './App.css';
 import { Component } from 'react';
 import { Button } from 'react-bootstrap';
-import { QuizList } from './Quiz/QuizList';
-import { QuizView } from './Quiz/QuizView';
-import { QuizEdit } from './Quiz/QuizEdit';
-import { QuizNew } from './Quiz/QuizNew';
-import { QuizGame } from './Quiz/QuizGame';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { QuizHome } from './Quiz';
+
 import firebase from 'firebase/app';
 import 'firebase/auth';
-import { FirebaseDatabaseProvider } from '@react-firebase/database';
-import {
-  FirebaseAuthConsumer,
-  FirebaseAuthProvider,
-} from '@react-firebase/auth';
+import 'firebase/database';
 
 const firebaseConfig = require('./FirebaseConfig.json');
 
 class TopMenu extends Component {
   render() {
-    if (this.props.auth.isSignedIn)
-      return (
-        <div className='d-flex flex-row justify-content-end w-100 p-2 bg-dark'>
+    return (
+      <div className='d-flex flex-row justify-content-end w-100 p-2 bg-dark '>
+        {this.props.isAuth ? (
           <Button
             variant='outline-light'
             onClick={() => {
-              firebase.auth().signOut();
+              firebase
+                .auth()
+                .signOut()
+                .then(() => this.props.onChange())
+                .catch((error) => {
+                  console.log(error);
+                  alert(error.message);
+                  this.props.onChange();
+                });
             }}
           >
             Logout
           </Button>
-        </div>
-      );
-    else {
-      return (
-        <div className='d-flex flex-row justify-content-end w-100 p-2 bg-dark'>
+        ) : (
           <Button
             variant='outline-light'
             onClick={() => {
               const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
-              firebase.auth().signInWithPopup(googleAuthProvider);
+              firebase
+                .auth()
+                .signInWithPopup(googleAuthProvider)
+                .then((e) => this.props.onChange())
+                .catch((error) => {
+                  console.log(error);
+                  alert(error.message);
+                  this.props.onChange();
+                });
             }}
           >
             Login
           </Button>
-        </div>
-      );
-    }
+        )}
+      </div>
+    );
   }
 }
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { page: 'quiz_list', pagedata: {} };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    this.state = { currentUser: firebase.auth().currentUser };
   }
+
   render() {
+    console.log(this.props);
+
     return (
-      <div className='App vw-100 vh-100 d-flex flex-column justify-content-center align-items-center'>
-        <FirebaseAuthProvider {...firebaseConfig} firebase={firebase}>
-          <FirebaseDatabaseProvider {...firebaseConfig} firebase={firebase}>
-            <FirebaseAuthConsumer>
-              {(auth) => (
-                <div className='w-100 h-100'>
-                  <TopMenu auth={auth} />
-                  {this.state.page === 'quiz_list' ? (
-                    <QuizList
-                      auth={auth}
-                      pagedata={this.state.pagedata}
-                      setpage={(page, pagedata) => {
-                        this.setState({ page: page, pagedata: pagedata });
-                      }}
-                    />
-                  ) : null}
-                  {this.state.page === 'quiz_view' ? (
-                    <QuizView
-                      auth={auth}
-                      pagedata={this.state.pagedata}
-                      setpage={(page, pagedata) => {
-                        this.setState({ page: page, pagedata: pagedata });
-                      }}
-                    />
-                  ) : null}
-                  {this.state.page === 'quiz_edit' ? (
-                    <QuizEdit
-                      auth={auth}
-                      pagedata={this.state.pagedata}
-                      setpage={(page, pagedata) => {
-                        this.setState({ page: page, pagedata: pagedata });
-                      }}
-                    />
-                  ) : null}
-                  {this.state.page === 'quiz_new' ? (
-                    <QuizNew
-                      auth={auth}
-                      pagedata={this.state.pagedata}
-                      setpage={(page, pagedata) => {
-                        this.setState({ page: page, pagedata: pagedata });
-                      }}
-                    />
-                  ) : null}
-                  {this.state.page === 'quiz_game' ? (
-                    <QuizGame
-                      auth={auth}
-                      pagedata={this.state.pagedata}
-                      setpage={(page, pagedata) => {
-                        this.setState({ page: page, pagedata: pagedata });
-                      }}
-                    />
-                  ) : null}
-                </div>
-              )}
-            </FirebaseAuthConsumer>
-          </FirebaseDatabaseProvider>
-        </FirebaseAuthProvider>
-      </div>
+      <Router>
+        <div className='App'>
+          <Switch>
+            <Route path='/about'>1</Route>
+            <Route path='/topics'>2</Route>
+            <Route path='/'>
+              <TopMenu
+                isAuth={this.state.currentUser !== null}
+                onChange={() =>
+                  this.setState({ currentUser: firebase.auth().currentUser })
+                }
+              />
+              <QuizHome isAuth={this.state.currentUser !== null} />
+            </Route>
+          </Switch>
+        </div>
+      </Router>
     );
   }
 }
