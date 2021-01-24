@@ -1,18 +1,17 @@
 {
   "rules": {
     "posts": {
-      ".read": "true",
+      ".read": "auth.uid === '9BJqxG4gVZVz7APyU11FRnMUHID2'",
       "$post_id": {
         ".write": "!data.exists() || data.child('uid').val() === auth.uid",
-        ".read": "true",
+        ".read": "auth.uid === '9BJqxG4gVZVz7APyU11FRnMUHID2'",
         ".validate": "!(data.child('uid').exists()) || data.child('uid').val() === auth.uid",
 
         "title": { ".validate": "newData.isString()" },
         "md": { ".validate": "newData.isString()" },
         "uid": { ".validate": "!data.exists() || data.val() === auth.uid" },
-        "category": {
-          ".validate": "!newData.exists() || newData.isString()"
-        },
+        "category": { ".validate": "newData.isString()" },
+        "chaper": { ".validate": "newData.isString()" },
         "$other": { ".validate": false }
       }
     }

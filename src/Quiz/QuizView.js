@@ -1,220 +1,232 @@
-import {
-  FirebaseDatabaseNode,
-  FirebaseDatabaseMutation,
-} from '@react-firebase/database';
-import { createRef } from 'react';
+import { Component, createRef } from 'react';
 import { Card, Button } from 'react-bootstrap';
-import { MarkdownReader } from './MarkdownReader';
-const { Component } = require('react');
+import { MarkdownReaderV2 } from './MarkdownReader';
+import { Link, withRouter } from 'react-router-dom';
 
-class QuizView extends Component {
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/database';
+
+class Main extends Component {
   constructor(props) {
     super(props);
-    this.state = { post_list: null, post_count: 0, post: null };
+
+    this.state = {
+      posts_list: [],
+      posts_count: 0,
+      post_index_in_list: 0,
+
+      post_data: null,
+      post_id: null,
+
+      prev_post_id: null,
+      next_post_id: null,
+    };
     this.now_index = 0;
-    this.markdown_reader = createRef();
+  }
+
+  setPageList(posts) {
+    const posts_of_this_category = Object.entries(posts).filter(
+      ([post_id, post_data]) =>
+        post_data.category === this.state.post_data.category
+    );
+    const posts_list = [];
+    const chapter_unordered_set = {};
+    let post_index_in_list = 0;
+
+    Object.entries(posts_of_this_category).forEach(
+      ([__unused__, [post_id, post]]) => {
+        const chapter = post.chapter;
+        if (!(chapter in chapter_unordered_set))
+          chapter_unordered_set[chapter] = [];
+        chapter_unordered_set[chapter].push([post_id, post.title]);
+      }
+    );
+
+    Object.keys(chapter_unordered_set)
+      .sort()
+      .forEach((chapter) => {
+        chapter_unordered_set[chapter].sort().forEach(([post_id, post]) => {
+          posts_list.push(post_id);
+        });
+      });
+
+    this.setState({
+      posts_list: posts_list,
+      posts_count: posts_list.length,
+      post_index_in_list: posts_list.findIndex((e) => e === this.state.post_id),
+    });
+  }
+
+  setNextPage() {
+    const prev_post_id = this.state.posts_list[
+      (this.state.post_index_in_list - 1 + this.state.posts_count) %
+        this.state.posts_count
+    ];
+    const next_post_id = this.state.posts_list[
+      (this.state.post_index_in_list + 1) % this.state.posts_count
+    ];
+
+    this.setState({
+      prev_post_id: prev_post_id,
+      next_post_id: next_post_id,
+    });
+  }
+
+  componentDidMount() {
+    const params = new URLSearchParams(this.props.location.search);
+    const post_id = params.get('post_id');
+    this.setState({ post_id: post_id });
+  }
+
+  componentDidUpdate(prevProps, prevState, sanpshot) {
+    if (
+      this.state.post_data === null ||
+      prevState.post_id !== this.state.post_id
+    ) {
+      firebase
+        .database()
+        .ref(`/posts/${this.state.post_id}`)
+        .once('value')
+        .then((s) => {
+          const post_db = s.val();
+          if (post_db === null) {
+            alert('잘못된 post_id 입니다. Home으로 이동합니다.');
+            this.props.history.push('/');
+          } else {
+            this.setState({
+              post_data: post_db,
+            });
+            if (this.state.posts_count !== 0) {
+              this.setState({
+                post_index_in_list: this.state.posts_list.findIndex(
+                  (e) => e === this.state.post_id
+                ),
+              });
+              this.setNextPage();
+            }
+          }
+        });
+    }
+    if (
+      prevState.post_data === null ||
+      (this.state.post_data !== null &&
+        prevState.post_data.category !== this.state.post_data.category)
+    ) {
+      firebase
+        .database()
+        .ref(`/posts/`)
+        .once('value')
+        .then((s) => {
+          this.setPageList(s.val());
+        });
+    }
+    if (prevState.posts_count === 0 && this.state.posts_count !== 0) {
+      this.setNextPage();
+    }
   }
 
   render() {
-    const btn_back = (
-      <Button
-        className='mt-2'
-        size='sm'
-        onClick={() => {
-          this.props.setpage('quiz_list');
-        }}
-      >
-        Back to List
-      </Button>
-    );
-
-    let firebase_posts_data = null;
-    if (this.state.post_list === null) {
-      firebase_posts_data = (
-        <FirebaseDatabaseNode path='posts/'>
-          {(d) => {
-            if (d.value !== null) {
-              const posts_db = d.value;
-              const categories = { other: [] };
-              Object.entries(posts_db).forEach(([post_id, post], incr) => {
-                let category = post.category || 'other';
-                if (category.length === 0) category = 'other';
-
-                if (!(category in categories)) categories[category] = [];
-                categories[category].push([post_id, post]);
-              });
-
-              const post_list = [];
-              let now_index = 0;
-              for (const category_name in categories) {
-                categories[category_name].sort((a, b) =>
-                  a[1].title.localeCompare(b[1].title)
-                );
-                let find_index = -1;
-                categories[category_name].forEach(([post_id]) => {
-                  if (post_id === this.props.pagedata.idx) {
-                    find_index = post_list.length;
-                  }
-                  post_list.push(post_id);
-                });
-                if (find_index !== -1) now_index = find_index;
-              }
-              this.now_index = now_index;
-              this.setState({
-                post_list: post_list,
-                post_count: post_list.length,
-              });
-            }
-            return <></>;
-          }}
-        </FirebaseDatabaseNode>
-      );
-    }
-    let firebase_this_post_data = null;
-    if (this.state.post === null)
-      firebase_this_post_data = (
-        <FirebaseDatabaseNode path={`posts/${this.props.pagedata.idx}`}>
-          {(d) => {
-            if (d.isLoading === null || d.isLoading || d.value === null)
-              return (
-                <>
-                  {btn_back}
-                  <br />
-                  Loading...
-                </>
-              );
-            this.setState({ post: d.value });
-            return <></>;
-          }}
-        </FirebaseDatabaseNode>
-      );
+    if (this.state.post_data === null) return <>Loading...</>;
     return (
       <>
-        {firebase_this_post_data}
-        <>
-          {btn_back}
-
-          {this.props.auth.isSignedIn &&
-          this.state.post !== null &&
-          this.props.auth.user.uid === this.state.post.uid ? (
-            <>
-              <Button
-                className='mt-2 ml-2'
-                size='sm'
-                variant='warning'
-                onClick={() => {
-                  this.props.setpage('quiz_edit', {
-                    idx: this.props.pagedata.idx,
-                  });
-                }}
-              >
-                Edit
-              </Button>
-              <FirebaseDatabaseMutation
-                path={`posts/${this.props.pagedata.idx}`}
-                type='set'
-              >
-                {({ runMutation }) => {
-                  return (
-                    <Button
-                      className='mt-2 ml-2'
-                      size='sm'
-                      variant='danger'
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            'Do you really want to delete this quiz?'
-                          )
-                        )
-                          (async () => {
-                            await runMutation(null);
-                            this.props.setpage('quiz_list');
-                          })();
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  );
-                }}
-              </FirebaseDatabaseMutation>
-            </>
-          ) : null}
+        <div className='d-flex pt-2'>
+          <Link
+            to={`/`}
+            children={<Button size='sm' children={'Back to list'} />}
+          />
+          {this.props.isAuth &&
+            this.state.post_data !== null &&
+            this.props.User.uid === this.state.post_data.uid && (
+              <>
+                <Button
+                  className='ml-2'
+                  size='sm'
+                  variant='warning'
+                  onClick={() => {
+                    // TO DO: edit tihs post
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  className='ml-2'
+                  size='sm'
+                  variant='danger'
+                  onClick={() => {
+                    if (
+                      window.confirm('Do you really want to delete this quiz?')
+                    )
+                      (async () => {
+                        // TO DO: delete this post
+                      })();
+                  }}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
           <Button
-            className='mt-2 ml-2'
+            className='ml-2'
             variant='info'
             size='sm'
             onClick={() => {
-              this.props.setpage('quiz_game', {
-                list: [this.props.pagedata.idx],
-              });
+              // To DO : start quiz game with this post
             }}
-          >
-            Quiz
-          </Button>
+            children={'Quiz'}
+          />
           <Button
-            className='mt-2 ml-2'
+            className='ml-2'
             variant='secondary'
             size='sm'
             onClick={() => this.markdown_reader.current.hideAll()}
-          >
-            Mask
-          </Button>
-          <br />
-          <div className='m-3 mh-100'>
-            <Card className='mh-100'>
-              {this.state.post !== null ? (
-                <Card.Body>
-                  <Card.Title className='font-weight-bold mb-0'>
-                    {this.state.post.title}
-                  </Card.Title>
-                  <h6>{this.state.post.category}</h6>
-                  <MarkdownReader
-                    value={this.state.post.md}
-                    ref={this.markdown_reader}
-                  />
-                </Card.Body>
-              ) : null}
-            </Card>
-            {firebase_posts_data}
+            children={'Mask'}
+          />
+        </div>
+        <br />
+        <div className='m-3 mh-100 align-self-stretch'>
+          <Card className='mh-100'>
+            <Card.Body>
+              <h6
+                children={`${this.state.post_data.category}-${this.state.post_data.chapter}`}
+              />
+              <Card.Title
+                className='font-weight-bold mb-0'
+                children={this.state.post_data.title}
+              />
+              <MarkdownReaderV2 data={this.state.post_data.md} />
+            </Card.Body>
+          </Card>
+
+          <Link to={`/view?post_id=${this.state.prev_post_id}`}>
             <Button
               className='mt-2 ml-2'
               variant='secondary'
               size='sm'
+              children={'◀'}
               onClick={() => {
-                const new_index =
-                  (this.now_index - 1 + this.state.post_count) %
-                  this.state.post_count;
-                this.now_index = new_index;
+                this.setState({ post_id: this.state.prev_post_id });
                 window.scrollY = 0;
-                this.setState({ post: null });
-                this.props.setpage('quiz_view', {
-                  idx: this.state.post_list[new_index],
-                });
               }}
-            >
-              ◀
-            </Button>
+            />
+          </Link>
+          <Link to={`/view?post_id=${this.state.next_post_id}`}>
             <Button
               className='mt-2 ml-2'
               variant='secondary'
               size='sm'
+              children={'▶'}
               onClick={() => {
-                const new_index = (this.now_index + 1) % this.state.post_count;
-                this.now_index = new_index;
+                this.setState({ post_id: this.state.next_post_id });
                 window.scrollY = 0;
-                this.setState({ post: null });
-                this.props.setpage('quiz_view', {
-                  idx: this.state.post_list[new_index],
-                });
               }}
-            >
-              ▶
-            </Button>
-          </div>
-        </>
+            />
+          </Link>
+        </div>
       </>
     );
   }
 }
 
+const QuizView = withRouter(Main);
 export { QuizView };
