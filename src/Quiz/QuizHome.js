@@ -1,12 +1,12 @@
 import { Card, Button, Form, Accordion } from 'react-bootstrap';
 import { Component } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
 
-class QuizHome extends Component {
+class Main extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -77,7 +77,16 @@ class QuizHome extends Component {
           categories: Object.keys(category_set),
         });
 
-        this.selectCategory('미분류');
+        const params = new URLSearchParams(this.props.location.search);
+        console.log('has', params.has('category'));
+        console.log('get', params.get('category') in category_set);
+        if (
+          !params.has('category') ||
+          !(params.get('category') in category_set)
+        ) {
+          this.props.history.push(`/`);
+          this.selectCategory('미분류');
+        } else this.selectCategory(params.get('category'));
       });
   }
 
@@ -146,7 +155,10 @@ class QuizHome extends Component {
             variant='secondary'
             className='d-inline-flex'
             children={category_name}
-            onClick={() => this.selectCategory(category_name)}
+            onClick={() => {
+              this.props.history.push(`/?category=${category_name}`);
+              this.selectCategory(category_name);
+            }}
           />
         ))}
       </div>
@@ -232,4 +244,5 @@ class QuizHome extends Component {
   }
 }
 
+const QuizHome = withRouter(Main);
 export { QuizHome };
