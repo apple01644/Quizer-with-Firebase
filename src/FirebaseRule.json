@@ -11,7 +11,7 @@
         "md": { ".validate": "newData.isString()" },
         "uid": { ".validate": "!data.exists() || data.val() === auth.uid" },
         "category": { ".validate": "newData.isString()" },
-        "chaper": { ".validate": "newData.isString()" },
+        "chapter": { ".validate": "newData.isString()" },
         "$other": { ".validate": false }
       }
     }

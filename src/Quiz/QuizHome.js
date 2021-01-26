@@ -78,8 +78,6 @@ class Main extends Component {
         });
 
         const params = new URLSearchParams(this.props.location.search);
-        console.log('has', params.has('category'));
-        console.log('get', params.get('category') in category_set);
         if (
           !params.has('category') ||
           !(params.get('category') in category_set)
@@ -124,9 +122,6 @@ class Main extends Component {
             <Button
               className='mt-2 '
               size='sm'
-              onClick={() => {
-                this.props.setpage('quiz_new');
-              }}
               disabled={!this.props.isAuth}
               children={'New'}
             />
