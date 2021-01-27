@@ -75,14 +75,6 @@ class Main extends Component {
           </div>
           <div className='d-flex flex-row'>
             <div className='mr-2' style={{ width: '40vh' }}>
-              <Form.Group controlId='title' className='mb-2'>
-                <Form.Control
-                  type='text'
-                  placeholder='여기에 제목 입력'
-                  onChange={handleChange}
-                  className='py-0'
-                />
-              </Form.Group>
               <Form.Group controlId='category' className='mb-2'>
                 <Form.Control
                   type='text'
@@ -95,6 +87,14 @@ class Main extends Component {
                 <Form.Control
                   type='text'
                   placeholder='여기에 챕터 입력'
+                  onChange={handleChange}
+                  className='py-0'
+                />
+              </Form.Group>
+              <Form.Group controlId='title' className='mb-2'>
+                <Form.Control
+                  type='text'
+                  placeholder='여기에 제목 입력'
                   onChange={handleChange}
                   className='py-0'
                 />
