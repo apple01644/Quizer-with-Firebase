@@ -32,7 +32,6 @@ class Main extends Component {
     );
     const posts_list = [];
     const chapter_unordered_set = {};
-    let post_index_in_list = 0;
 
     Object.entries(posts_of_this_category).forEach(
       ([__unused__, [post_id, post]]) => {
@@ -139,27 +138,35 @@ class Main extends Component {
             this.state.post_data !== null &&
             this.props.User.uid === this.state.post_data.uid && (
               <>
-                <Button
-                  className='ml-2'
-                  size='sm'
-                  variant='warning'
-                  onClick={() => {
-                    // TO DO: edit tihs post
-                  }}
-                >
-                  Edit
-                </Button>
+                <Link to={`/edit_post?post_id=${this.state.post_id}`}>
+                  <Button
+                    className='ml-2'
+                    size='sm'
+                    variant='warning'
+                    children={'Edit'}
+                  />
+                </Link>
                 <Button
                   className='ml-2'
                   size='sm'
                   variant='danger'
                   onClick={() => {
-                    if (
-                      window.confirm('Do you really want to delete this quiz?')
-                    )
-                      (async () => {
-                        // TO DO: delete this post
-                      })();
+                    if (this.state.post_id.length > 16)
+                      if (
+                        window.confirm(
+                          'Do you really want to delete this quiz?'
+                        )
+                      ) {
+                        firebase
+                          .database()
+                          .ref(`posts/${this.state.post_id}`)
+                          .set(null)
+                          .then(() => this.props.history.push(`/`))
+                          .catch((e) => {
+                            alert(e);
+                            console.log(e);
+                          });
+                      }
                   }}
                 >
                   Delete

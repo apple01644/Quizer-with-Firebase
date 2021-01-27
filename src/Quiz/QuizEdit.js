@@ -1,135 +1,143 @@
-import {
-  FirebaseDatabaseNode,
-  FirebaseDatabaseMutation,
-} from '@react-firebase/database';
 import { Form, Button } from 'react-bootstrap';
-import { Component, createRef } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { Component } from 'react';
+import { withRouter } from 'react-router-dom';
+import { MarkdownReaderV2 } from './MarkdownReader';
 
-class QuizEdit extends Component {
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/database';
+
+class Main extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
-    this.markdown_viewer = createRef();
+    this.state = { post_id: null };
   }
+
+  componentDidMount() {
+    const params = new URLSearchParams(this.props.location.search);
+    const post_id = params.get('post_id');
+    firebase
+      .database()
+      .ref(`/posts/${post_id}`)
+      .once('value')
+      .then((s) => {
+        const post_db = s.val();
+        if (post_db === null) {
+          alert('잘못된 post_id 입니다. Home으로 이동합니다.');
+          this.props.history.push('/');
+        } else {
+          this.setState(post_db);
+          this.setState({ post_id: post_id });
+          console.log(this.state);
+        }
+      });
+  }
+
   render() {
-    const btn_back = (
-      <Button
-        className='mt-2'
-        size='sm'
-        variant='danger'
-        onClick={() => {
-          if (window.confirm('Do you really want to discard changes?'))
-            this.props.setpage('quiz_list');
-        }}
-      >
-        Back to List
-      </Button>
-    );
     const handleChange = (e) => {
       const { id, value } = e.target;
       this.setState({
         [id]: value,
       });
     };
+    if (this.state.post_id === null) return <>Loading...</>;
     return (
-      <>
-        <FirebaseDatabaseNode path={`posts/${this.props.pagedata.idx}`}>
-          {(d) => {
-            if (d.isLoading === null || d.isLoading || d.value === null)
-              return <>Loading...</>;
-            const post = d.value;
-            if (post.category === undefined) post.category = null;
-            return (
-              <FirebaseDatabaseMutation
-                path={`posts/${this.props.pagedata.idx}`}
-                type='update'
-              >
-                {({ runMutation }) => {
-                  return (
-                    <div className='m-3 mh-100'>
-                      <Form
-                        className='mh-100'
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const new_post = {
-                            title: this.state.title || post.title,
-                            md: this.state.md || post.md,
-                            category: post.category,
-                            uid: post.uid,
-                          };
-                          if (this.state.category !== undefined)
-                            new_post.category = this.state.category;
-                          if (
-                            new_post.category !== null &&
-                            new_post.category.length === 0
-                          )
-                            new_post.category = null;
-                          console.log(this.state);
-                          console.log(new_post);
-                          (async () => {
-                            await runMutation(new_post);
-                            this.props.setpage('quiz_view', {
-                              idx: this.props.pagedata.idx,
-                            });
-                          })();
-                        }}
-                      >
-                        {btn_back}
-                        <Button
-                          className='mt-2 ml-2'
-                          size='sm'
-                          type='Submit'
-                          variant='success'
-                        >
-                          Save Changes
-                        </Button>
-                        <br />
-                        <Form.Group controlId='title'>
-                          <Form.Label>제목</Form.Label>
-                          <Form.Control
-                            type='text'
-                            defaultValue={post.title}
-                            onChange={handleChange}
-                          />
-                        </Form.Group>
-                        <Form.Group controlId='category'>
-                          <Form.Label>카테고리</Form.Label>
-                          <Form.Control
-                            type='text'
-                            defaultValue={post.category}
-                            onChange={handleChange}
-                          />
-                        </Form.Group>
-                        <Form.Group controlId='md'>
-                          <Form.Label>
-                            {'내용(가릴 부분은 <, >로 감싸기)'}
-                          </Form.Label>
-                          <Form.Control
-                            as='textarea'
-                            rows={8}
-                            defaultValue={post.md}
-                            onChange={(e) => {
-                              handleChange(e);
-                              console.log(e, this.markdown_viewer);
-                            }}
-                          />
-                        </Form.Group>
-                      </Form>
-                      <ReactMarkdown
-                        className='border'
-                        ref={this.markdown_viewer}
-                      />
-                    </div>
-                  );
-                }}
-              </FirebaseDatabaseMutation>
-            );
+      <div className='m-3 mh-100'>
+        <Form
+          className='mh-100'
+          onSubmit={(e) => {
+            e.preventDefault();
+            const renew_post = {
+              title: this.state.title,
+              md: this.state.md,
+              category: this.state.category,
+              chapter: this.state.chapter,
+              uid: this.props.User.uid,
+            };
+
+            console.log(this.state);
+            console.log(renew_post);
+
+            firebase
+              .database()
+              .ref(`posts/${this.state.post_id}`)
+              .set(renew_post)
+              .then(() => this.props.history.push(`/`))
+              .catch((e) => {
+                alert(e);
+                console.log(e);
+              });
           }}
-        </FirebaseDatabaseNode>
-      </>
+        >
+          <div>
+            <Button
+              className=' mb-2'
+              variant='danger'
+              size='sm'
+              onClick={() => {
+                if (
+                  window.confirm('Do you really want to cancel editing a quiz?')
+                )
+                  this.props.history.push(`/`);
+              }}
+              children={'Back to List'}
+            />
+            <Button
+              className='ml-2 mb-2'
+              size='sm'
+              type='Submit'
+              variant='success'
+              children={'Save Quiz'}
+            />
+          </div>
+          <div className='d-flex flex-row'>
+            <div className='mr-2' style={{ width: '40vh' }}>
+              <Form.Group controlId='category' className='mb-2'>
+                <Form.Control
+                  type='text'
+                  placeholder='여기에 카테고리 입력'
+                  onChange={handleChange}
+                  defaultValue={this.state.category}
+                  className='py-0'
+                />
+              </Form.Group>
+              <Form.Group controlId='chapter' className='mb-2'>
+                <Form.Control
+                  type='text'
+                  placeholder='여기에 챕터 입력'
+                  onChange={handleChange}
+                  defaultValue={this.state.chapter}
+                  className='py-0'
+                />
+              </Form.Group>
+              <Form.Group controlId='title' className='mb-2'>
+                <Form.Control
+                  type='text'
+                  placeholder='여기에 제목 입력'
+                  onChange={handleChange}
+                  value={this.state.title}
+                  className='py-0'
+                />
+              </Form.Group>
+              <Form.Group controlId='md' className='mb-2'>
+                <Form.Control
+                  as='textarea'
+                  rows={25}
+                  placeholder='여기에 내용 입력'
+                  onChange={handleChange}
+                  defaultValue={this.state.md}
+                />
+              </Form.Group>
+            </div>
+            <div className='ml-2 align-self-stretch' style={{ width: '40vh' }}>
+              <MarkdownReaderV2 data={this.state.md} />
+            </div>
+          </div>
+        </Form>
+      </div>
     );
   }
 }
 
+const QuizEdit = withRouter(Main);
 export { QuizEdit };
