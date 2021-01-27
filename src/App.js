@@ -11,6 +11,7 @@ import { QuizHome } from './Quiz';
 import { MarkdownReaderV2 } from './Quiz/MarkdownReader';
 import { QuizView } from './Quiz/QuizView';
 import { QuizNew } from './Quiz/QuizNew';
+import { QuizEdit } from './Quiz/QuizEdit';
 
 import firebase from 'firebase/app';
 import 'firebase/auth';
@@ -121,6 +122,9 @@ class App extends Component {
           <Switch>
             <Route path='/new_post'>
               <QuizNew {...common_properties} />
+            </Route>
+            <Route path='/edit_post'>
+              <QuizEdit {...common_properties} />
             </Route>
             <Route path='/view'>
               <QuizView {...common_properties} />
