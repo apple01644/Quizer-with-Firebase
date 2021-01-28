@@ -90,7 +90,7 @@ class Main extends Component {
               children={'Save Quiz'}
             />
           </div>
-          <div className='d-flex flex-row'>
+          <div className='d-flex flex-row mb-5'>
             <div className='mr-2' style={{ width: '40vh' }}>
               <Form.Group controlId='category' className='mb-2'>
                 <Form.Control
@@ -119,7 +119,7 @@ class Main extends Component {
                   className='py-0'
                 />
               </Form.Group>
-              <Form.Group controlId='md' className='mb-2'>
+              <Form.Group controlId='md' className='mb-0'>
                 <Form.Control
                   as='textarea'
                   rows={25}
@@ -129,8 +129,11 @@ class Main extends Component {
                 />
               </Form.Group>
             </div>
-            <div className='ml-2 align-self-stretch' style={{ width: '40vh' }}>
-              <MarkdownReaderV2 data={this.state.md} />
+            <div
+              className='ml-2 align-self-stretch mh-100'
+              style={{ width: '40vh' }}
+            >
+              <MarkdownReaderV2 data={this.state.md} className='h-100' />
             </div>
           </div>
         </Form>

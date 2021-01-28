@@ -197,7 +197,11 @@ class MarkdownReaderV2 extends Component {
 
   render() {
     return (
-      <div className='px-3 py-2 border rounded w-100 text-left'>
+      <div
+        className={
+          'px-3 py-2 border rounded w-100 text-left ' + this.props.className
+        }
+      >
         {this.state.content_array.map((content, idx) =>
           this.buildJSX(idx, content)
         )}
