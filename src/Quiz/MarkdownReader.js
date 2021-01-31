@@ -1,10 +1,11 @@
 import { Button } from 'react-bootstrap';
-import { Component, createRef } from 'react';
+import { Component } from 'react';
 
 class FlipButton extends Component {
   render() {
     return (
       <Button
+        as='div'
         variant='outline-dark'
         size='sm'
         style={{ boxShadow: 'none' }}
@@ -22,9 +23,45 @@ class FlipButton extends Component {
             content_array: content_array,
           });
         }}
-      >
-        {this.props.value}
-      </Button>
+        children={this.props.value}
+      />
+    );
+  }
+}
+
+class QuizButton extends Component {
+  formatAnswer() {
+    let result = this.props.user_value;
+    if (result === undefined) result = '';
+    while (result.length < this.props.value.length)
+      result += this.props.value[result.length] === ' ' ? '.' : '●';
+    return result;
+  }
+  render() {
+    return (
+      <Button
+        as='div'
+        variant={
+          this.props.user_value !== this.props.value
+            ? 'outline-danger'
+            : 'outline-success'
+        }
+        size='sm'
+        style={{ boxShadow: 'none' }}
+        className={`p-0 ${
+          this.props.user_value !== this.props.value
+            ? 'text-danger'
+            : 'text-success'
+        } ${this.props.selected ? 'bg-warning focus' : 'bg-white'}`}
+        onClick={() => {
+          const quiz_data = this.props.ParentState.quiz_data;
+          quiz_data.cursor = this.props.idx;
+          this.props.setParentState({
+            quiz_data: quiz_data,
+          });
+        }}
+        children={this.formatAnswer(this.props.value)}
+      />
     );
   }
 }
@@ -39,7 +76,7 @@ const CONTENT_TYPE = {
 class MarkdownReaderV2 extends Component {
   constructor(props) {
     super(props);
-    this.state = { content_array: [] };
+    this.state = { content_array: [], quiz_data: {}, quiz_setup: false };
   }
 
   hideAll() {
@@ -64,15 +101,29 @@ class MarkdownReaderV2 extends Component {
       case CONTENT_TYPE.BR:
         return <br key={idx} />;
       case CONTENT_TYPE.BLANK:
-        return (
-          <FlipButton
-            key={idx}
-            idx={idx}
-            ParentState={this.state}
-            setParentState={(e) => this.setState(e)}
-            value={content.value}
-          />
-        );
+        if (this.props.quiz_mode !== true) {
+          return (
+            <FlipButton
+              key={idx}
+              idx={idx}
+              ParentState={this.state}
+              setParentState={(e) => this.setState(e)}
+              value={content.value}
+            />
+          );
+        } else {
+          return (
+            <QuizButton
+              key={idx}
+              idx={idx}
+              ParentState={this.state}
+              setParentState={(e) => this.setState(e)}
+              value={content.value}
+              user_value={this.state.quiz_data[idx].user_value}
+              selected={idx === this.state.quiz_data.cursor}
+            />
+          );
+        }
       case CONTENT_TYPE.TITLE:
         return (
           <p key={idx} className='font-weight-bold mb-0'>
@@ -91,6 +142,7 @@ class MarkdownReaderV2 extends Component {
       TITLE: 2,
     };
     let content_array = [];
+    let quiz_data = { cursor: null };
     let buffer = '';
     let lex = LEX.TEXT;
     let idx = 0;
@@ -141,10 +193,17 @@ class MarkdownReaderV2 extends Component {
       switch (ch) {
         case '>':
           if (hasBuffer) {
+            if (this.props.quiz_mode === true) {
+              if (quiz_data.cursor === null) quiz_data.cursor = idx;
+              quiz_data[idx] = {
+                user_value: '',
+              };
+            }
+            const value = popBuffer();
             content_array.push({
               idx: idx++,
               type: CONTENT_TYPE.BLANK,
-              value: popBuffer(),
+              value: value,
               hide: false,
             });
           }
@@ -180,9 +239,23 @@ class MarkdownReaderV2 extends Component {
       else if (lex === LEX.TITLE) lex_title(ch, hasBuffer);
     }
     if (buffer.length > 0) append_text(popBuffer());
-    this.setState({
-      content_array: Array.from(content_array),
-    });
+
+    if (this.props.quiz_mode === true) {
+      console.log(quiz_data);
+      this.setState(
+        {
+          content_array: Array.from(content_array),
+          quiz_data: quiz_data,
+        },
+        () => {
+          this.setState({ quiz_setup: true });
+        }
+      );
+    } else {
+      this.setState({
+        content_array: Array.from(content_array),
+      });
+    }
   }
 
   componentDidMount() {
@@ -197,15 +270,22 @@ class MarkdownReaderV2 extends Component {
 
   render() {
     return (
-      <div
-        className={
-          'px-3 py-2 border rounded w-100 text-left ' + this.props.className
-        }
-      >
-        {this.state.content_array.map((content, idx) =>
-          this.buildJSX(idx, content)
-        )}
-      </div>
+      (this.props.quiz_mode !== true || this.state.quiz_setup === true) && (
+        <div
+          className={
+            'px-3 py-2 border rounded w-100 text-left ' + this.props.className
+          }
+        >
+          {console.log(
+            'this.state.quiz_setup',
+            this.state.quiz_setup,
+            this.state.quiz_data
+          )}
+          {this.state.content_array.map((content, idx) =>
+            this.buildJSX(idx, content)
+          )}
+        </div>
+      )
     );
   }
 }
