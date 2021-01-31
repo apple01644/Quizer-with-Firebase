@@ -1,11 +1,172 @@
 import { Component, createRef } from 'react';
-import { Card, Button } from 'react-bootstrap';
+import { Card, Button, Modal } from 'react-bootstrap';
 import { MarkdownReaderV2 } from './MarkdownReader';
 import { Link, withRouter } from 'react-router-dom';
 
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
+
+function shuffleArray(array) {
+  let curId = array.length;
+  while (0 !== curId) {
+    let randId = Math.floor(Math.random() * curId);
+    curId -= 1;
+    let tmp = array[curId];
+    array[curId] = array[randId];
+    array[randId] = tmp;
+  }
+  return array;
+}
+
+class QuizGame extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      all_posts: [],
+      deck: [],
+      now_quiz: null,
+    };
+    this.markdown_reader = createRef();
+  }
+
+  componentDidMount() {
+    this.updateData().then(() => {
+      this.updateDeck();
+      this.popQuiz(true);
+    });
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshow) {
+    if (
+      !Array.isArray(prevProps.data) ||
+      (Array.isArray(prevProps.data) &&
+        Array.isArray(this.props.data) &&
+        JSON.stringify(prevProps.data) !== JSON.stringify(this.props.data))
+    ) {
+      this.updateData().then(() => {
+        this.updateDeck();
+        this.popQuiz(true);
+      });
+    }
+  }
+
+  updateData() {
+    return firebase
+      .database()
+      .ref(`/posts/`)
+      .once('value')
+
+      .then((s) => {
+        this.setState({ all_posts: s.val(), deck: [], now_quiz: null });
+      });
+  }
+
+  updateDeck(callback) {
+    const new_deck = Array.from(shuffleArray(Array.from(this.props.data)));
+    this.setState({ deck: new_deck }, callback);
+  }
+
+  popQuiz(skip_confirm) {
+    if (this.state.deck.length === 0) {
+      if (skip_confirm !== true)
+        if (window.confirm('모든 문제를 풀었습니다!\n계속 진행하시겠습니까?'))
+          (() => {})('Do nothing');
+        else this.handleClose();
+
+      this.updateDeck(() => {
+        this.setState({
+          now_quiz: this.state.all_posts[this.state.deck[0]],
+          deck: this.state.deck.slice(1),
+        });
+      });
+    } else {
+      this.setState({
+        now_quiz: this.state.all_posts[this.state.deck[0]],
+        deck: this.state.deck.slice(1),
+      });
+    }
+  }
+
+  render() {
+    return (
+      <Modal
+        show={this.props.show}
+        onHide={() => this.props.handleClose()}
+        backdrop='static'
+        centered={true}
+        animation={false}
+        style={{ 'max-width': 'none' }}
+        dialogClassName='modal-90w mx-3 mw-100'
+      >
+        <Modal.Header className='flex-column'>
+          {this.state.now_quiz && (
+            <h6
+              children={`${this.state.now_quiz.category}-${this.state.now_quiz.chapter}`}
+            />
+          )}
+          <Modal.Title
+            children={
+              this.state.now_quiz !== null ? (
+                <b children={this.state.now_quiz.title} />
+              ) : (
+                'Loading...'
+              )
+            }
+          />
+        </Modal.Header>
+        <Modal.Body>
+          <MarkdownReaderV2
+            data={this.state.now_quiz && this.state.now_quiz.md}
+            quiz_mode={true}
+            ref={this.markdown_reader}
+          />
+        </Modal.Body>
+
+        <Modal.Footer className='d-flex justify-content-end align-items-stretch'>
+          <Button
+            variant='danger'
+            className='mr-auto'
+            onClick={() => this.props.handleClose()}
+            children='Close'
+          />
+          <div className='d-flex flex-column flex-fill'>
+            <Button
+              as='div'
+              className='form-control flex-fill bg-white border-danger text-danger mb-2'
+              style={{ width: 'auto' }}
+              children={'0000000'}
+            />
+            <input
+              className='form-control flex-fill'
+              type='text'
+              placeholder='답 입력칸'
+              style={{ width: 'auto' }}
+            />
+          </div>
+          <Button
+            variant='primary'
+            children='Hint'
+            onClick={() =>
+              alert('답 입력칸에서 .(마침표)키를 누르면 힌트가 나옵니다.')
+            }
+          />
+          <Button
+            variant='warning'
+            children='Pass'
+            onClick={() => this.markdown_reader.passQuiz()}
+          />
+          <Button
+            variant='secondary'
+            children='Next'
+            onClick={() => this.popQuiz()}
+          />
+        </Modal.Footer>
+      </Modal>
+    );
+  }
+}
 
 class Main extends Component {
   constructor(props) {
@@ -21,8 +182,11 @@ class Main extends Component {
 
       prev_post_id: null,
       next_post_id: null,
+
+      show_QuizGame: false,
     };
     this.now_index = 0;
+    this.markdown_reader = createRef();
   }
 
   setPageList(posts) {
@@ -129,6 +293,13 @@ class Main extends Component {
     if (this.state.post_data === null) return <>Loading...</>;
     return (
       <>
+        {this.state.show_QuizGame !== undefined && (
+          <QuizGame
+            show={this.state.show_QuizGame}
+            handleClose={() => this.setState({ show_QuizGame: false })}
+            data={[this.state.post_id]}
+          />
+        )}
         <div className='d-flex pt-2'>
           <Link
             to={`/`}
@@ -178,7 +349,7 @@ class Main extends Component {
             variant='info'
             size='sm'
             onClick={() => {
-              // To DO : start quiz game with this post
+              this.setState({ show_QuizGame: true });
             }}
             children={'Quiz'}
           />
@@ -201,7 +372,10 @@ class Main extends Component {
                 className='font-weight-bold mb-0'
                 children={this.state.post_data.title}
               />
-              <MarkdownReaderV2 data={this.state.post_data.md} />
+              <MarkdownReaderV2
+                data={this.state.post_data.md}
+                ref={this.markdown_reader}
+              />
             </Card.Body>
           </Card>
 
