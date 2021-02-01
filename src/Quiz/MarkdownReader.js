@@ -37,15 +37,16 @@ class QuizButton extends Component {
       result += this.props.value[result.length] === ' ' ? '.' : '●';
     return result;
   }
+
+  isSolved() {
+    return this.props.user_value === this.props.value;
+  }
+
   render() {
     return (
       <Button
         as='div'
-        variant={
-          this.props.user_value !== this.props.value
-            ? 'outline-danger'
-            : 'outline-success'
-        }
+        variant={this.isSolved() ? 'outline-success' : 'outline-danger'}
         size='sm'
         style={{ boxShadow: 'none' }}
         className={`p-0 ${
@@ -54,13 +55,13 @@ class QuizButton extends Component {
             : 'text-success'
         } ${this.props.selected ? 'bg-warning focus' : 'bg-white'}`}
         onClick={() => {
-          const quiz_data = this.props.ParentState.quiz_data;
-          quiz_data.cursor = this.props.idx;
-          this.props.setParentState({
-            quiz_data: quiz_data,
-          });
+          this.props.setCursor(this.props.idx);
         }}
-        children={this.formatAnswer(this.props.value)}
+        children={
+          this.isSolved()
+            ? this.props.value
+            : this.formatAnswer(this.props.value)
+        }
       />
     );
   }
@@ -76,7 +77,7 @@ const CONTENT_TYPE = {
 class MarkdownReaderV2 extends Component {
   constructor(props) {
     super(props);
-    this.state = { content_array: [], quiz_data: {}, quiz_setup: false };
+    this.state = { content_array: [] };
   }
 
   hideAll() {
@@ -112,6 +113,7 @@ class MarkdownReaderV2 extends Component {
             />
           );
         } else {
+          console.log(this.state, idx, this.props.quiz_data);
           return (
             <QuizButton
               key={idx}
@@ -119,8 +121,16 @@ class MarkdownReaderV2 extends Component {
               ParentState={this.state}
               setParentState={(e) => this.setState(e)}
               value={content.value}
-              user_value={this.state.quiz_data[idx].user_value}
-              selected={idx === this.state.quiz_data.cursor}
+              user_value={this.props.quiz_data[idx].user_value}
+              selected={idx === this.props.quiz_data.cursor}
+              setCursor={(idx) => {
+                const quiz_data = this.props.quiz_data;
+                quiz_data.cursor = idx;
+                this.props.setParentState({
+                  quiz_data: quiz_data,
+                });
+                this.props.onUpdateRealAnswer();
+              }}
             />
           );
         }
@@ -193,13 +203,14 @@ class MarkdownReaderV2 extends Component {
       switch (ch) {
         case '>':
           if (hasBuffer) {
+            const value = popBuffer();
             if (this.props.quiz_mode === true) {
               if (quiz_data.cursor === null) quiz_data.cursor = idx;
               quiz_data[idx] = {
                 user_value: '',
+                value: value,
               };
             }
-            const value = popBuffer();
             content_array.push({
               idx: idx++,
               type: CONTENT_TYPE.BLANK,
@@ -219,7 +230,7 @@ class MarkdownReaderV2 extends Component {
         case '\n':
           if (hasBuffer) {
             content_array.push({
-              idx: idx - 1,
+              idx: idx++,
               type: CONTENT_TYPE.TITLE,
               value: popBuffer(),
             });
@@ -241,16 +252,13 @@ class MarkdownReaderV2 extends Component {
     if (buffer.length > 0) append_text(popBuffer());
 
     if (this.props.quiz_mode === true) {
-      console.log(quiz_data);
-      this.setState(
-        {
-          content_array: Array.from(content_array),
-          quiz_data: quiz_data,
-        },
-        () => {
-          this.setState({ quiz_setup: true });
-        }
+      quiz_data.finished = true;
+      this.props.setParentState({ quiz_data: quiz_data }, () =>
+        this.props.onUpdateRealAnswer()
       );
+      this.setState({
+        content_array: Array.from(content_array),
+      });
     } else {
       this.setState({
         content_array: Array.from(content_array),
@@ -258,29 +266,63 @@ class MarkdownReaderV2 extends Component {
     }
   }
 
+  isSolved(blank) {
+    return blank.value === blank.user_value;
+  }
+
+  nextQuiz() {
+    const keys = Object.keys(this.props.quiz_data).filter(
+      (k) => k !== 'cursor'
+    );
+    const start_idx = keys.findIndex((k) => {
+      return parseInt(k) === this.props.quiz_data.cursor;
+    });
+    if (start_idx === -1) {
+      return false;
+    }
+    const ffind = keys.findIndex(
+      (k, idx) => idx > start_idx && !this.isSolved(this.props.quiz_data[k])
+    );
+    const bfind = keys.findIndex(
+      (k, idx) => idx < start_idx && !this.isSolved(this.props.quiz_data[k])
+    );
+    const quiz_data = this.props.quiz_data;
+    if (ffind !== -1) {
+      quiz_data.cursor = parseInt(keys[ffind]);
+      this.props.setParentState({ quiz_data: quiz_data }, () =>
+        this.props.onUpdateRealAnswer()
+      );
+      return true;
+    } else if (bfind !== -1) {
+      quiz_data.cursor = parseInt(keys[bfind]);
+      this.props.setParentState({ quiz_data: quiz_data }, () =>
+        this.props.onUpdateRealAnswer()
+      );
+
+      return true;
+    }
+    return false;
+  }
+
   componentDidMount() {
     this.update_content_array();
   }
 
   componentDidUpdate(prevProps, prevState, sanpshot) {
-    if (prevProps.data !== this.props.data) {
+    if (JSON.stringify(prevProps.data) !== JSON.stringify(this.props.data)) {
       this.update_content_array();
     }
   }
 
   render() {
     return (
-      (this.props.quiz_mode !== true || this.state.quiz_setup === true) && (
+      (this.props.quiz_mode !== true ||
+        this.props.quiz_data.finished === true) && (
         <div
           className={
             'px-3 py-2 border rounded w-100 text-left ' + this.props.className
           }
         >
-          {console.log(
-            'this.state.quiz_setup',
-            this.state.quiz_setup,
-            this.state.quiz_data
-          )}
           {this.state.content_array.map((content, idx) =>
             this.buildJSX(idx, content)
           )}

@@ -27,8 +27,12 @@ class QuizGame extends Component {
       all_posts: [],
       deck: [],
       now_quiz: null,
+      answer: '',
+      hint: '',
+      quiz_data: { finished: false },
     };
     this.markdown_reader = createRef();
+    this.user_answer_field = createRef();
   }
 
   componentDidMount() {
@@ -70,23 +74,104 @@ class QuizGame extends Component {
 
   popQuiz(skip_confirm) {
     if (this.state.deck.length === 0) {
-      if (skip_confirm !== true)
-        if (window.confirm('모든 문제를 풀었습니다!\n계속 진행하시겠습니까?'))
+      if (skip_confirm !== true) {
+        if (this.props.data.length === 1);
+        else if (
+          window.confirm('모든 문제를 풀었습니다!\n계속 진행하시겠습니까?')
+        )
           (() => {})('Do nothing');
-        else this.handleClose();
-
-      this.updateDeck(() => {
-        this.setState({
-          now_quiz: this.state.all_posts[this.state.deck[0]],
-          deck: this.state.deck.slice(1),
+        else this.props.handleClose();
+      }
+      if (this.props.data.length === 1);
+      else
+        this.updateDeck(() => {
+          this.setState({
+            now_quiz: this.state.all_posts[this.state.deck[0]],
+            deck: this.state.deck.slice(1),
+            answer: '',
+            hint: '',
+            quiz_data: { finished: false },
+          });
         });
-      });
     } else {
       this.setState({
         now_quiz: this.state.all_posts[this.state.deck[0]],
         deck: this.state.deck.slice(1),
+        answer: '',
+        hint: '',
+        quiz_data: { finished: false },
       });
     }
+  }
+
+  maskedAnswer() {
+    const real_answer = this.getAnswer();
+    let result = this.state.answer;
+    while (result.length < real_answer.length)
+      result += real_answer[result.length] === ' ' ? '.' : '●';
+    return result;
+  }
+
+  getAnswer() {
+    return this.state.quiz_data[this.state.quiz_data.cursor].value;
+  }
+
+  onChangeUserAnswer(e) {
+    const user_answer = e.target.value;
+    this.setState({ answer: user_answer });
+    if (user_answer === this.getAnswer()) {
+      e.target.value = '';
+      this.setState({ answer: '', hint: '' });
+      const quiz_data = this.state.quiz_data;
+      quiz_data[this.state.quiz_data.cursor].user_value =
+        quiz_data[this.state.quiz_data.cursor].value;
+      this.setState({ quiz_data: quiz_data });
+      if (this.markdown_reader.current.nextQuiz() === true) {
+        this.setState({ hint: this.maskedAnswer() });
+      } else this.popQuiz();
+    } else {
+      const real_answer = this.getAnswer();
+      let new_hint = '';
+      this.state.hint.split('').forEach((ch, idx) => {
+        if (ch === real_answer[idx] || user_answer[idx] === real_answer[idx])
+          new_hint += real_answer[idx];
+        else new_hint += real_answer[idx] === ' ' ? '.' : '●';
+      });
+      this.setState({ hint: new_hint });
+    }
+  }
+
+  addHint() {
+    const real_answer = this.getAnswer();
+    let new_hint = '';
+    let add_flag = true;
+    this.state.hint.split('').forEach((ch, idx) => {
+      if (ch === real_answer[idx]) new_hint += real_answer[idx];
+      else {
+        if (real_answer[idx] === ' ') new_hint += '.';
+        else if (add_flag) {
+          new_hint += real_answer[idx];
+          add_flag = false;
+        } else new_hint += '●';
+      }
+    });
+    this.setState({ hint: new_hint });
+  }
+
+  passQuiz() {
+    this.user_answer_field.current.value = '';
+    this.setState({ answer: '', hint: '' });
+    const quiz_data = this.state.quiz_data;
+    quiz_data[this.state.quiz_data.cursor].user_value =
+      quiz_data[this.state.quiz_data.cursor].value;
+    this.setState({ quiz_data: quiz_data });
+    if (this.markdown_reader.current.nextQuiz() === true) {
+      this.setState({ hint: this.maskedAnswer() });
+    } else this.popQuiz();
+  }
+
+  onUpdateRealAnswer() {
+    this.setState({ hint: this.maskedAnswer() });
   }
 
   render() {
@@ -100,7 +185,7 @@ class QuizGame extends Component {
         style={{ 'max-width': 'none' }}
         dialogClassName='modal-90w mx-3 mw-100'
       >
-        <Modal.Header className='flex-column'>
+        <Modal.Header className='flex-column text-center'>
           {this.state.now_quiz && (
             <h6
               children={`${this.state.now_quiz.category}-${this.state.now_quiz.chapter}`}
@@ -119,8 +204,11 @@ class QuizGame extends Component {
         <Modal.Body>
           <MarkdownReaderV2
             data={this.state.now_quiz && this.state.now_quiz.md}
-            quiz_mode={true}
             ref={this.markdown_reader}
+            quiz_mode={true}
+            quiz_data={this.state.quiz_data}
+            onUpdateRealAnswer={() => this.onUpdateRealAnswer()}
+            setParentState={(d, callback) => this.setState(d, callback)}
           />
         </Modal.Body>
 
@@ -132,17 +220,40 @@ class QuizGame extends Component {
             children='Close'
           />
           <div className='d-flex flex-column flex-fill'>
-            <Button
-              as='div'
-              className='form-control flex-fill bg-white border-danger text-danger mb-2'
+            <div
+              className='form-control flex-fill bg-white border d-flex flex-row justify-content-center mb-2'
               style={{ width: 'auto' }}
-              children={'0000000'}
+              children={
+                this.state.quiz_data.cursor !== undefined &&
+                this.state.hint
+                  .split('')
+                  .map((ch, idx) => (
+                    <p
+                      className={
+                        this.getAnswer()[idx] === ch
+                          ? 'text-success'
+                          : 'text-danger'
+                      }
+                      style={{ 'white-space': 'pre' }}
+                      children={ch}
+                    />
+                  ))
+              }
             />
             <input
-              className='form-control flex-fill'
+              ref={this.user_answer}
+              className='form-control flex-fill text-center'
               type='text'
-              placeholder='답 입력칸'
+              placeholder=''
               style={{ width: 'auto' }}
+              ref={this.user_answer_field}
+              onChange={(e) => this.onChangeUserAnswer(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === '.') {
+                  e.preventDefault();
+                  this.addHint();
+                }
+              }}
             />
           </div>
           <Button
@@ -155,7 +266,7 @@ class QuizGame extends Component {
           <Button
             variant='warning'
             children='Pass'
-            onClick={() => this.markdown_reader.passQuiz()}
+            onClick={() => this.passQuiz()}
           />
           <Button
             variant='secondary'
