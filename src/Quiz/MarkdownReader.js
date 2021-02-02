@@ -242,6 +242,10 @@ class MarkdownReaderV2 extends Component {
               value: popBuffer(),
             });
           }
+          content_array.push({
+            idx: idx++,
+            type: CONTENT_TYPE.BR,
+          });
           setLex(LEX.TEXT);
           break;
 
