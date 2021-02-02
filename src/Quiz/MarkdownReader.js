@@ -1,5 +1,6 @@
 import { Button } from 'react-bootstrap';
-import { Component } from 'react';
+import { Component, createRef } from 'react';
+import { scroller, Element as ScrollMilestone } from 'react-scroll';
 
 class FlipButton extends Component {
   render() {
@@ -10,7 +11,7 @@ class FlipButton extends Component {
         size='sm'
         style={{ boxShadow: 'none' }}
         className={
-          'p-0 bg-white ' +
+          'align-self-center p-0 bg-white ' +
           (this.props.ParentState.content_array[this.props.idx].hide
             ? 'text-white'
             : 'text-dark')
@@ -49,7 +50,7 @@ class QuizButton extends Component {
         variant={this.isSolved() ? 'outline-success' : 'outline-danger'}
         size='sm'
         style={{ boxShadow: 'none' }}
-        className={`p-0 ${
+        className={`align-self-center p-0 ${
           this.props.user_value !== this.props.value
             ? 'text-danger'
             : 'text-success'
@@ -100,7 +101,12 @@ class MarkdownReaderV2 extends Component {
           />
         );
       case CONTENT_TYPE.BR:
-        return <br key={idx} />;
+        return (
+          <br
+            key={idx}
+            style={{ width: 'calc(100vw - 8rem)', marginBottom: '0.15rem' }}
+          />
+        );
       case CONTENT_TYPE.BLANK:
         if (this.props.quiz_mode !== true) {
           return (
@@ -113,25 +119,25 @@ class MarkdownReaderV2 extends Component {
             />
           );
         } else {
-          console.log(this.state, idx, this.props.quiz_data);
           return (
-            <QuizButton
-              key={idx}
-              idx={idx}
-              ParentState={this.state}
-              setParentState={(e) => this.setState(e)}
-              value={content.value}
-              user_value={this.props.quiz_data[idx].user_value}
-              selected={idx === this.props.quiz_data.cursor}
-              setCursor={(idx) => {
-                const quiz_data = this.props.quiz_data;
-                quiz_data.cursor = idx;
-                this.props.setParentState({
-                  quiz_data: quiz_data,
-                });
-                this.props.onUpdateRealAnswer();
-              }}
-            />
+            <ScrollMilestone name={`blank_${idx}`} key={idx}>
+              <QuizButton
+                idx={idx}
+                ParentState={this.state}
+                setParentState={(e) => this.setState(e)}
+                value={content.value}
+                user_value={this.props.quiz_data[idx].user_value}
+                selected={idx === this.props.quiz_data.cursor}
+                setCursor={(idx) => {
+                  const quiz_data = this.props.quiz_data;
+                  quiz_data.cursor = idx;
+                  this.props.setParentState({
+                    quiz_data: quiz_data,
+                  });
+                  this.props.onUpdateRealAnswer();
+                }}
+              />
+            </ScrollMilestone>
           );
         }
       case CONTENT_TYPE.TITLE:
@@ -189,7 +195,7 @@ class MarkdownReaderV2 extends Component {
           });
           break;
 
-        case '*':
+        case '#':
           if (!hasBuffer) setLex(LEX.TITLE);
           else buffer += ch;
           break;
@@ -211,6 +217,7 @@ class MarkdownReaderV2 extends Component {
                 value: value,
               };
             }
+
             content_array.push({
               idx: idx++,
               type: CONTENT_TYPE.BLANK,
@@ -292,16 +299,43 @@ class MarkdownReaderV2 extends Component {
       this.props.setParentState({ quiz_data: quiz_data }, () =>
         this.props.onUpdateRealAnswer()
       );
+      console.log(
+        scroller.scrollTo(`blank_${keys[ffind]}`, {
+          duration: 1500,
+          smooth: true,
+          offset: 300,
+        })
+      );
       return true;
     } else if (bfind !== -1) {
       quiz_data.cursor = parseInt(keys[bfind]);
       this.props.setParentState({ quiz_data: quiz_data }, () =>
         this.props.onUpdateRealAnswer()
       );
-
+      scroller.scrollTo(`blank_${keys[ffind]}`, {
+        duration: 1500,
+        smooth: true,
+        offset: 300,
+      });
       return true;
     }
     return false;
+  }
+
+  resetQuiz() {
+    const quiz_data = this.props.quiz_data;
+    quiz_data.cursor = null;
+    this.state.content_array.forEach((content, idx) => {
+      if (content.type === CONTENT_TYPE.BLANK) {
+        if (quiz_data.cursor === null) quiz_data.cursor = idx;
+        quiz_data[idx] = {
+          user_value: '',
+          value: content.value,
+        };
+      }
+    });
+    this.props.setParentState({ quiz_data: quiz_data });
+    this.props.onUpdateRealAnswer();
   }
 
   componentDidMount() {
@@ -320,8 +354,13 @@ class MarkdownReaderV2 extends Component {
         this.props.quiz_data.finished === true) && (
         <div
           className={
-            'px-3 py-2 border rounded w-100 text-left ' + this.props.className
+            'px-3 py-2 border rounded w-100 text-left d-flex flex-row flex-wrap align-content-start ' +
+            (this.props.className || '')
           }
+          style={Object.assign(
+            { whiteSpace: 'break-spaces' },
+            this.props.style
+          )}
         >
           {this.state.content_array.map((content, idx) =>
             this.buildJSX(idx, content)
