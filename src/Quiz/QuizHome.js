@@ -18,6 +18,9 @@ class Main extends Component {
       checkstate_of_posts: {},
 
       categories: [],
+
+      show_QuizGame: false,
+      seleceted_Quizzes: [],
     };
   }
 
@@ -100,12 +103,15 @@ class Main extends Component {
     Object.entries(this.state.checkstate_of_posts).forEach(([key, value]) => {
       if (value) quizzes.push(key);
     });
+    console.log(quizzes);
     return quizzes;
   }
 
   startQuiz() {
-    const quizzes = this.selectedQuizzes();
-    if (quizzes.length > 0) this.props.setpage('quiz_game', { list: quizzes });
+    this.setState({
+      seleceted_Quizzes: this.selectedQuizzes(),
+      show_QuizGame: true,
+    });
   }
 
   hasQuiz() {
@@ -163,6 +169,14 @@ class Main extends Component {
       <div className='flex-fill d-flex flex-column align-self-stretch'>
         {crud_bar}
         {category_bar}
+        {this.state.show_QuizGame !== undefined &&
+          this.state.seleceted_Quizzes.length > 0 && (
+            <QuizGame
+              show={this.state.show_QuizGame}
+              handleClose={() => this.setState({ show_QuizGame: false })}
+              data={this.state.seleceted_Quizzes}
+            />
+          )}
         <Accordion defaultActiveKey='0'>
           {Object.entries(this.state.post_summary_group_by_chapter).map(
             ([chapter_name, posts], category_id) => (
@@ -170,7 +184,6 @@ class Main extends Component {
                 <div className='d-flex flex-row bg-success align-items-center'>
                   <Form.Check
                     type='checkbox'
-                    value={chapter_name}
                     onChange={(e) => {
                       const query = {};
                       for (const [post_id] of this.state
