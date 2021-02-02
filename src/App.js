@@ -2,10 +2,7 @@ import './App.css';
 import { Component } from 'react';
 import { Button } from 'react-bootstrap';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
-import { QuizHome } from './Quiz';
-import { QuizView } from './Quiz/QuizView';
-import { QuizNew } from './Quiz/QuizNew';
-import { QuizEdit } from './Quiz/QuizEdit';
+import { QuizHome, QuizView, QuizNew, QuizEdit } from './Quiz';
 
 import firebase from 'firebase/app';
 import 'firebase/auth';
@@ -75,15 +72,18 @@ class App extends Component {
       <Router>
         <div className='App'>
           <Switch>
-            <Route path='/new_post'>
-              <QuizNew {...common_properties} />
-            </Route>
-            <Route path='/edit_post'>
-              <QuizEdit {...common_properties} />
-            </Route>
-            <Route path='/view'>
-              <QuizView {...common_properties} />
-            </Route>
+            <Route
+              path='/new_post'
+              children={<QuizNew {...common_properties} />}
+            />
+            <Route
+              path='/edit_post'
+              children={<QuizEdit {...common_properties} />}
+            />
+            <Route
+              path='/view'
+              children={<QuizView {...common_properties} />}
+            />
             <Route path='/'>
               <TopMenu
                 {...common_properties}

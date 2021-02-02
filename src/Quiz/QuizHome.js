@@ -2,6 +2,8 @@ import { Card, Button, Form, Accordion } from 'react-bootstrap';
 import { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
 
+import { QuizGame } from './';
+
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
