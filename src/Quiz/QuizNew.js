@@ -36,14 +36,13 @@ class Main extends Component {
               uid: this.props.User.uid,
             };
 
-            console.log(this.state);
-            console.log(new_post);
-
             firebase
               .database()
               .ref(`posts/${new_post_key}`)
               .set(new_post)
-              .then(() => this.props.history.push(`/`))
+              .then(() =>
+                this.props.history.push(`/?category=${this.state.category}`)
+              )
               .catch((e) => {
                 alert(e);
                 console.log(e);

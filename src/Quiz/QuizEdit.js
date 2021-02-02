@@ -28,7 +28,6 @@ class Main extends Component {
         } else {
           this.setState(post_db);
           this.setState({ post_id: post_id });
-          console.log(this.state);
         }
       });
   }
@@ -55,14 +54,13 @@ class Main extends Component {
               uid: this.props.User.uid,
             };
 
-            console.log(this.state);
-            console.log(renew_post);
-
             firebase
               .database()
               .ref(`posts/${this.state.post_id}`)
               .set(renew_post)
-              .then(() => this.props.history.push(`/`))
+              .then(() =>
+                this.props.history.push(`/?category=${this.state.category}`)
+              )
               .catch((e) => {
                 alert(e);
                 console.log(e);
@@ -78,9 +76,11 @@ class Main extends Component {
                 if (
                   window.confirm('Do you really want to cancel editing a quiz?')
                 )
-                  this.props.history.push(`/`);
+                  this.props.history.push(
+                    `/view?post_id=${this.state.post_id}`
+                  );
               }}
-              children={'Back to List'}
+              children={'Discard changes'}
             />
             <Button
               className='ml-2 mb-2'
