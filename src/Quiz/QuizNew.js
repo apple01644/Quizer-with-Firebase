@@ -10,7 +10,6 @@ import 'firebase/database';
 class Main extends Component {
   constructor(props) {
     super(props);
-    console.log(this.props);
     this.state = { md: '' };
   }
   render() {
@@ -73,7 +72,7 @@ class Main extends Component {
             />
           </div>
           <div className='d-flex flex-row'>
-            <div className='mr-2' style={{ width: '40vh' }}>
+            <div className='mr-2' style={{ width: 'calc(50vw - 5rem)' }}>
               <Form.Group controlId='category' className='mb-2'>
                 <Form.Control
                   type='text'
@@ -107,7 +106,10 @@ class Main extends Component {
                 />
               </Form.Group>
             </div>
-            <div className='ml-2 align-self-stretch' style={{ width: '40vh' }}>
+            <div
+              className='ml-2 align-self-stretch'
+              style={{ width: 'calc(50vw - 5rem)' }}
+            >
               <MarkdownReaderV2 data={this.state.md} />
             </div>
           </div>
