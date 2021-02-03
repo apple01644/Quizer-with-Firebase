@@ -1,15 +1,16 @@
 import { Button } from 'react-bootstrap';
 import { Component, createRef } from 'react';
-import { scroller, Element as ScrollMilestone } from 'react-scroll';
 
 class FlipButton extends Component {
   render() {
     return (
       <Button
-        as='div'
-        variant='outline-dark'
+        as='p'
         size='sm'
-        style={{ boxShadow: 'none' }}
+        style={Object.assign(
+          { boxShadow: 'none', borderColor: '#CCCCCC' },
+          this.props.style
+        )}
         className={
           'align-self-center p-0 bg-white ' +
           (this.props.ParentState.content_array[this.props.idx].hide
@@ -46,10 +47,11 @@ class QuizButton extends Component {
   render() {
     return (
       <Button
-        as='div'
+        as='p'
+        ref={this.props.ParentState.blank_ref_set[this.props.idx]}
         variant={this.isSolved() ? 'outline-success' : 'outline-danger'}
         size='sm'
-        style={{ boxShadow: 'none' }}
+        style={Object.assign({ boxShadow: 'none' }, this.props.style)}
         className={`align-self-center p-0 ${
           this.props.user_value !== this.props.value
             ? 'text-danger'
@@ -71,14 +73,14 @@ class QuizButton extends Component {
 const CONTENT_TYPE = {
   TEXT: 0,
   BLANK: 1,
-  TITLE: 2,
+  IMPRESS: 2,
   BR: 3,
 };
 
 class MarkdownReaderV2 extends Component {
   constructor(props) {
     super(props);
-    this.state = { content_array: [] };
+    this.state = { content_array: [], blank_ref_set: {}, prev_cursor: 0 };
   }
 
   hideAll() {
@@ -98,13 +100,20 @@ class MarkdownReaderV2 extends Component {
             key={idx}
             className='align-self-start'
             children={content.value}
+            style={{
+              fontSize: `${content.fontSize_rem}rem`,
+            }}
           />
         );
       case CONTENT_TYPE.BR:
         return (
-          <br
+          <div
             key={idx}
-            style={{ width: 'calc(100vw - 8rem)', marginBottom: '0.15rem' }}
+            className='mr-auto'
+            style={{
+              width: 'calc(100vw - 6.5rem)',
+              marginBottom: `${content.size}rem`,
+            }}
           />
         );
       case CONTENT_TYPE.BLANK:
@@ -116,33 +125,43 @@ class MarkdownReaderV2 extends Component {
               ParentState={this.state}
               setParentState={(e) => this.setState(e)}
               value={content.value}
+              style={{
+                fontSize: `${content.fontSize_rem}rem`,
+              }}
             />
           );
         } else {
           return (
-            <ScrollMilestone name={`blank_${idx}`} key={idx}>
-              <QuizButton
-                idx={idx}
-                ParentState={this.state}
-                setParentState={(e) => this.setState(e)}
-                value={content.value}
-                user_value={this.props.quiz_data[idx].user_value}
-                selected={idx === this.props.quiz_data.cursor}
-                setCursor={(idx) => {
-                  const quiz_data = this.props.quiz_data;
-                  quiz_data.cursor = idx;
-                  this.props.setParentState({
-                    quiz_data: quiz_data,
-                  });
-                  this.props.onUpdateRealAnswer();
-                }}
-              />
-            </ScrollMilestone>
+            <QuizButton
+              idx={idx}
+              ParentState={this.state}
+              setParentState={(e) => this.setState(e)}
+              value={content.value}
+              user_value={this.props.quiz_data[idx].user_value}
+              selected={idx === this.props.quiz_data.cursor}
+              setCursor={(idx) => {
+                const quiz_data = this.props.quiz_data;
+                quiz_data.cursor = idx;
+                this.props.setParentState({
+                  quiz_data: quiz_data,
+                });
+                this.props.onUpdateRealAnswer();
+              }}
+              style={{
+                fontSize: `${content.fontSize_rem}rem`,
+              }}
+            />
           );
         }
-      case CONTENT_TYPE.TITLE:
+      case CONTENT_TYPE.IMPRESS:
         return (
-          <p key={idx} className='font-weight-bold mb-0'>
+          <p
+            key={idx}
+            className='font-weight-bold mb-0'
+            style={{
+              fontSize: `${content.fontSize_rem}rem`,
+            }}
+          >
             <u>{content.value}</u>
           </p>
         );
@@ -155,13 +174,37 @@ class MarkdownReaderV2 extends Component {
     const LEX = {
       TEXT: 0,
       BLANK: 1,
-      TITLE: 2,
+      IMPRESS: 2,
+      LINE_BREAK: 3,
     };
     let content_array = [];
     let quiz_data = { cursor: null };
+    let blank_ref_set = {};
     let buffer = '';
     let lex = LEX.TEXT;
     let idx = 0;
+    let start_of_line = true;
+    let fontSize_rem = 1;
+    let line_value = '';
+
+    const isHeaderSign = (ch) => {
+      const HeaderSigns = [
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '-',
+        '+',
+        '*',
+      ];
+      return HeaderSigns.findIndex((sign) => sign === ch) !== -1;
+    };
 
     function setLex(new_lex) {
       lex = new_lex;
@@ -177,6 +220,8 @@ class MarkdownReaderV2 extends Component {
         idx: idx++,
         type: CONTENT_TYPE.TEXT,
         value: text,
+        start_of_line: start_of_line,
+        fontSize_rem: fontSize_rem,
       });
     }
 
@@ -189,14 +234,11 @@ class MarkdownReaderV2 extends Component {
 
         case '\n':
           if (hasBuffer) append_text(popBuffer());
-          content_array.push({
-            idx: idx++,
-            type: CONTENT_TYPE.BR,
-          });
+          setLex(LEX.LINE_BREAK);
           break;
 
         case '#':
-          if (!hasBuffer) setLex(LEX.TITLE);
+          if (!hasBuffer) setLex(LEX.IMPRESS);
           else buffer += ch;
           break;
 
@@ -216,11 +258,13 @@ class MarkdownReaderV2 extends Component {
                 user_value: '',
                 value: value,
               };
+              blank_ref_set[idx] = createRef();
             }
 
             content_array.push({
               idx: idx++,
               type: CONTENT_TYPE.BLANK,
+              fontSize_rem: fontSize_rem,
               value: value,
               hide: false,
             });
@@ -232,21 +276,18 @@ class MarkdownReaderV2 extends Component {
       }
     };
 
-    const lex_title = (ch, hasBuffer) => {
+    const lex_impress = (ch, hasBuffer) => {
       switch (ch) {
         case '\n':
           if (hasBuffer) {
             content_array.push({
               idx: idx++,
-              type: CONTENT_TYPE.TITLE,
+              type: CONTENT_TYPE.IMPRESS,
+              fontSize_rem: fontSize_rem,
               value: popBuffer(),
             });
           }
-          content_array.push({
-            idx: idx++,
-            type: CONTENT_TYPE.BR,
-          });
-          setLex(LEX.TEXT);
+          setLex(LEX.LINE_BREAK);
           break;
 
         default:
@@ -254,11 +295,56 @@ class MarkdownReaderV2 extends Component {
       }
     };
 
+    const lex_line_break = (ch, hasBuffer) => {
+      switch (ch) {
+        case '\n':
+          buffer += ch;
+          break;
+
+        default:
+          content_array.push({
+            idx: idx++,
+            type: CONTENT_TYPE.BR,
+            size: buffer.length,
+          });
+          buffer = '';
+          setLex(LEX.TEXT);
+          lex_text(ch, hasBuffer);
+      }
+    };
+
     for (const ch of this.props.data) {
       const hasBuffer = buffer.length > 0;
       if (lex === LEX.TEXT) lex_text(ch, hasBuffer);
       else if (lex === LEX.BLANK) lex_blank(ch, hasBuffer);
-      else if (lex === LEX.TITLE) lex_title(ch, hasBuffer);
+      else if (lex === LEX.IMPRESS) lex_impress(ch, hasBuffer);
+      else if (lex === LEX.LINE_BREAK) lex_line_break(ch, hasBuffer);
+
+      if (ch === '\n') {
+        start_of_line = true;
+        line_value = '';
+        fontSize_rem = 1;
+      } else {
+        start_of_line = false;
+        line_value += buffer;
+        const length = line_value.length;
+        let startingTab = 0;
+        let startingNonWhitespace = '';
+        for (let x = 0; x < 7 && x < length; ++x) {
+          if (line_value[x] === ' ') startingTab += 1;
+          else {
+            startingNonWhitespace = line_value[x];
+            break;
+          }
+        }
+        if (startingTab <= 1) {
+          let factor = startingTab;
+          if (startingTab === 0 && isHeaderSign(startingNonWhitespace)) {
+            factor = 1;
+          }
+          fontSize_rem = 1.5 - (factor / 3.0) * 0.5;
+        } else fontSize_rem = 1;
+      }
     }
     if (buffer.length > 0) append_text(popBuffer());
 
@@ -269,6 +355,7 @@ class MarkdownReaderV2 extends Component {
       );
       this.setState({
         content_array: Array.from(content_array),
+        blank_ref_set: blank_ref_set,
       });
     } else {
       this.setState({
@@ -303,24 +390,14 @@ class MarkdownReaderV2 extends Component {
       this.props.setParentState({ quiz_data: quiz_data }, () =>
         this.props.onUpdateRealAnswer()
       );
-      console.log(
-        scroller.scrollTo(`blank_${keys[ffind]}`, {
-          duration: 1500,
-          smooth: true,
-          offset: 300,
-        })
-      );
+
       return true;
     } else if (bfind !== -1) {
       quiz_data.cursor = parseInt(keys[bfind]);
       this.props.setParentState({ quiz_data: quiz_data }, () =>
         this.props.onUpdateRealAnswer()
       );
-      scroller.scrollTo(`blank_${keys[ffind]}`, {
-        duration: 1500,
-        smooth: true,
-        offset: 300,
-      });
+
       return true;
     }
     return false;
@@ -349,6 +426,20 @@ class MarkdownReaderV2 extends Component {
   componentDidUpdate(prevProps, prevState, sanpshot) {
     if (JSON.stringify(prevProps.data) !== JSON.stringify(this.props.data)) {
       this.update_content_array();
+    }
+
+    if (
+      prevProps.quiz_data !== undefined &&
+      this.state.prev_cursor !== this.props.quiz_data.cursor
+    ) {
+      this.state.blank_ref_set[
+        this.props.quiz_data.cursor
+      ].current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      this.setState({ prev_cursor: this.props.quiz_data.cursor });
     }
   }
 
