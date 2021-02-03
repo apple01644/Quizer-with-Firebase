@@ -59,7 +59,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     this.state = { currentUser: firebase.auth().currentUser };
   }
 
