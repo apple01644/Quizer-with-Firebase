@@ -59,7 +59,7 @@ class Main extends Component {
               .ref(`posts/${this.state.post_id}`)
               .set(renew_post)
               .then(() =>
-                this.props.history.push(`/?category=${this.state.category}`)
+                this.props.history.push(`/view?post_id=${this.state.post_id}`)
               )
               .catch((e) => {
                 alert(e);
