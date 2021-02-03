@@ -49,9 +49,11 @@ class Main extends Component {
     Object.keys(chapter_unordered_set)
       .sort()
       .forEach((chapter) => {
-        chapter_unordered_set[chapter].sort().forEach(([post_id, post]) => {
-          posts_list.push(post_id);
-        });
+        chapter_unordered_set[chapter]
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .forEach(([post_id, post]) => {
+            posts_list.push(post_id);
+          });
       });
 
     this.setState({

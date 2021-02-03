@@ -54,7 +54,9 @@ class Main extends Component {
     Object.keys(chapter_unordered_set)
       .sort()
       .forEach(function (key) {
-        chapter_ordered_set[key] = chapter_unordered_set[key].sort();
+        chapter_ordered_set[key] = chapter_unordered_set[key].sort((a, b) =>
+          a[1].localeCompare(b[1])
+        );
       });
 
     this.setState({
@@ -105,7 +107,6 @@ class Main extends Component {
     Object.entries(this.state.checkstate_of_posts).forEach(([key, value]) => {
       if (value) quizzes.push(key);
     });
-    console.log(quizzes);
     return quizzes;
   }
 
