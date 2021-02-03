@@ -201,11 +201,13 @@ class QuizGame extends Component {
       >
         <Modal.Header className='flex-column text-center'>
           {this.state.now_quiz && (
-            <h6
+            <p
+              className='mb-0'
               children={`${this.state.now_quiz.category}-${this.state.now_quiz.chapter}`}
             />
           )}
           <Modal.Title
+            as='p'
             children={
               this.state.now_quiz !== null ? (
                 <b children={this.state.now_quiz.title} />
@@ -215,7 +217,7 @@ class QuizGame extends Component {
             }
           />
         </Modal.Header>
-        <Modal.Body class='px-3 py-2'>
+        <Modal.Body className='px-3 py-2'>
           {this.state.now_quiz !== null && (
             <MarkdownReaderV2
               style={{ overflowY: 'scroll', height: '41rem' }}

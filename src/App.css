@@ -1,3 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap');
+
+p,
+span {
+  font-family: 'Noto Serif KR', serif;
+}
+
 .App {
   text-align: center;
   display: flex;

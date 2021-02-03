@@ -209,11 +209,13 @@ class Main extends Component {
         <div className='m-3 mh-100 align-self-stretch'>
           <Card className='mh-100'>
             <Card.Body>
-              <h6
+              <p
+                className='mb-0'
                 children={`${this.state.post_data.category}-${this.state.post_data.chapter}`}
               />
               <Card.Title
-                className='font-weight-bold mb-0'
+                as='p'
+                className='font-weight-bold mb-2'
                 children={this.state.post_data.title}
               />
               <MarkdownReaderV2
