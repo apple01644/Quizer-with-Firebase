@@ -35,15 +35,20 @@ class TopMenu extends Component {
           <Button
             variant='outline-light'
             onClick={() => {
-              const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
               firebase
                 .auth()
-                .signInWithPopup(googleAuthProvider)
-                .then((e) => this.props.onChange())
-                .catch((error) => {
-                  console.log(error);
-                  alert(error.message);
-                  this.props.onChange();
+                .setPersistence(firebase.auth.Auth.Persistence.SESSION)
+                .then(() => {
+                  const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
+                  firebase
+                    .auth()
+                    .signInWithPopup(googleAuthProvider)
+                    .then((e) => this.props.onChange())
+                    .catch((error) => {
+                      console.log(error);
+                      alert(error.message);
+                      this.props.onChange();
+                    });
                 });
             }}
           >
@@ -59,7 +64,6 @@ class App extends Component {
   constructor(props) {
     super(props);
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     this.state = { currentUser: firebase.auth().currentUser };
   }
 
@@ -87,9 +91,12 @@ class App extends Component {
             <Route path='/'>
               <TopMenu
                 {...common_properties}
-                onChange={() =>
-                  this.setState({ currentUser: firebase.auth().currentUser })
-                }
+                onChange={() => {
+                  this.setState({ currentUser: firebase.auth().currentUser });
+                  if (this.state.currentUser !== null) {
+                    firebase.auth().currentUser.getIdToken();
+                  }
+                }}
               />
               <QuizHome {...common_properties} />
             </Route>
