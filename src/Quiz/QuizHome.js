@@ -58,12 +58,16 @@ class Main extends Component {
           a[1].localeCompare(b[1])
         );
       });
+    const chapters_of_this_category = Object.keys(chapter_ordered_set);
 
     this.setState({
-      chapters_of_this_category: Object.keys(chapter_ordered_set),
+      chapters_of_this_category: chapters_of_this_category,
       post_summary_group_by_chapter: chapter_ordered_set,
       posts_of_this_category: posts_of_this_category,
       checkstate_of_posts: checkstate_of_posts,
+      category_name: category_name,
+      selectedChapterName:
+        chapters_of_this_category !== undefined && chapters_of_this_category[0],
     });
   }
 
@@ -126,7 +130,14 @@ class Main extends Component {
     const crud_bar = (
       <div className='mb-2'>
         <Link
-          to={`/new_post`}
+          to={
+            `/new_post` +
+            (this.state.category_name !== undefined &&
+              this.state.category_name !== '미분류)' &&
+              `?category=${this.state.category_name}` +
+                (this.state.selectedChapterName !== undefined &&
+                  `&chapter=${this.state.selectedChapterName}`))
+          }
           children={
             <Button
               className='mt-2 '
@@ -180,7 +191,14 @@ class Main extends Component {
               data={this.state.seleceted_Quizzes}
             />
           )}
-        <Accordion defaultActiveKey='0'>
+        <Accordion
+          defaultActiveKey='0'
+          onSelect={(idx) =>
+            this.setState({
+              selectedChapterName: this.state.chapters_of_this_category[idx],
+            })
+          }
+        >
           {Object.entries(this.state.post_summary_group_by_chapter).map(
             ([chapter_name, posts], category_id) => (
               <Card key={category_id} className='border-0 rounded-0"'>

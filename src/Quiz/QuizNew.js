@@ -12,6 +12,19 @@ class Main extends Component {
     super(props);
     this.state = { md: '' };
   }
+
+  componentDidMount() {
+    const params = new URLSearchParams(this.props.location.search);
+    if (params.has('category')) {
+      const category = params.get('category');
+      this.setState({ category: category });
+    }
+    if (params.has('chapter')) {
+      const chapter = params.get('chapter');
+      this.setState({ chapter: chapter });
+    }
+  }
+
   render() {
     const handleChange = (e) => {
       const { id, value } = e.target;
@@ -79,6 +92,7 @@ class Main extends Component {
                   placeholder='여기에 카테고리 입력'
                   onChange={handleChange}
                   className='py-0'
+                  value={this.state.category}
                 />
               </Form.Group>
               <Form.Group controlId='chapter' className='mb-2'>
@@ -87,6 +101,7 @@ class Main extends Component {
                   placeholder='여기에 챕터 입력'
                   onChange={handleChange}
                   className='py-0'
+                  value={this.state.chapter}
                 />
               </Form.Group>
               <Form.Group controlId='title' className='mb-2'>
