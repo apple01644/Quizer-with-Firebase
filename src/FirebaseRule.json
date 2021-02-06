@@ -1,10 +1,10 @@
 {
   "rules": {
     "posts": {
-      ".read": "auth.uid === '9BJqxG4gVZVz7APyU11FRnMUHID2'",
+      ".read": "true",
       "$post_id": {
         ".write": "!data.exists() || data.child('uid').val() === auth.uid",
-        ".read": "auth.uid === '9BJqxG4gVZVz7APyU11FRnMUHID2'",
+        ".read": "true",
         ".validate": "!(data.child('uid').exists()) || data.child('uid').val() === auth.uid",
 
         "title": { ".validate": "newData.isString()" },
