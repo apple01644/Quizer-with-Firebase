@@ -12,7 +12,7 @@ class FlipButton extends Component {
           this.props.style
         )}
         className={
-          'align-self-center p-0 bg-white ' +
+          'align-self-center p-0 m-0 bg-white ' +
           (this.props.ParentState.content_array[this.props.idx].hide
             ? 'text-white'
             : 'text-dark')
@@ -52,7 +52,7 @@ class QuizButton extends Component {
         variant={this.isSolved() ? 'outline-success' : 'outline-danger'}
         size='sm'
         style={Object.assign({ boxShadow: 'none' }, this.props.style)}
-        className={`align-self-center p-0 ${
+        className={`align-self-center p-0 m-0 ${
           this.props.user_value !== this.props.value
             ? 'text-danger'
             : 'text-success'
