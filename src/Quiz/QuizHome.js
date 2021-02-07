@@ -192,6 +192,7 @@ class Main extends Component {
             />
           )}
         <Accordion
+          className='container p-0'
           defaultActiveKey='0'
           onSelect={(idx) =>
             this.setState({
@@ -229,7 +230,7 @@ class Main extends Component {
                         controlId={post_id}
                         key={post_incr}
                         className={
-                          'd-flex flex-row align-items-center m-0' +
+                          'd-flex flex-row align-items-center m-0 border-left border-right' +
                           (post_incr % 2 === 0 ? ' bg-white' : ' bg-light')
                         }
                       >
