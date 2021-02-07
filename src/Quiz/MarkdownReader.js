@@ -1,6 +1,14 @@
 import { Button } from 'react-bootstrap';
 import { Component, createRef } from 'react';
 
+const isNumber = (ch) => {
+  const Numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  return Numbers.findIndex((sign) => sign === ch) !== -1;
+};
+const isHeaderSign = (ch) => {
+  const HeaderSigns = ['-', '+', '*'];
+  return HeaderSigns.findIndex((sign) => sign === ch) !== -1;
+};
 class FlipButton extends Component {
   render() {
     return (
@@ -73,7 +81,7 @@ class QuizButton extends Component {
 const CONTENT_TYPE = {
   TEXT: 0,
   BLANK: 1,
-  IMPRESS: 2,
+  TABLE: 2,
   BR: 3,
 };
 
@@ -92,19 +100,91 @@ class MarkdownReaderV2 extends Component {
     this.setState({ content_array: content_array });
   }
 
+  parseStyleSign(value) {
+    const text = value.split('');
+    const styled_text_array = [];
+    let buffer = '';
+    let option_italic = false;
+    let option_bold = false;
+    let option_underline = false;
+    let option_del = false;
+
+    const flushBuffer = () => {
+      styled_text_array.push({
+        options: {
+          italic: option_italic,
+          bold: option_bold,
+          underline: option_underline,
+          del: option_del,
+        },
+        value: buffer,
+      });
+      buffer = '';
+    };
+
+    for (const ch of text) {
+      if (ch === '#') {
+        flushBuffer();
+        option_bold = !option_bold;
+        option_underline = !option_underline;
+      } else if (ch === '@') {
+        flushBuffer();
+        option_bold = !option_bold;
+      } else if (ch === '\\') {
+        flushBuffer();
+        option_italic = !option_italic;
+      } else if (ch === '_') {
+        flushBuffer();
+        option_underline = !option_underline;
+      } else if (ch === ';') {
+        flushBuffer();
+        option_del = !option_del;
+      } else buffer += ch;
+    }
+    if (buffer.length > 0) flushBuffer();
+
+    return (
+      <div className='d-flex'>
+        {styled_text_array.map((styled_text) => {
+          let result = <p children={styled_text.value} className='m-0' />;
+          if (styled_text.options.italic) result = <em children={result} />;
+          if (styled_text.options.bold) result = <strong children={result} />;
+          if (styled_text.options.underline) result = <u children={result} />;
+          if (styled_text.options.del) result = <del children={result} />;
+
+          return result;
+        })}
+      </div>
+    );
+  }
+
   buildJSX(idx, content) {
     switch (content.type) {
       case CONTENT_TYPE.TEXT:
-        return (
-          <span
-            key={idx}
-            className='align-self-start'
-            children={content.value}
-            style={{
-              fontSize: `${content.fontSize_rem}rem`,
-            }}
-          />
-        );
+        if (isNumber(content.value[0]) || isHeaderSign(content.value[0])) {
+          return (
+            <p
+              key={idx}
+              className='font-weight-bold mb-0'
+              style={{
+                fontSize: `${content.fontSize_rem}rem`,
+              }}
+            >
+              {this.parseStyleSign(content.value)}
+            </p>
+          );
+        } else {
+          return (
+            <span
+              key={idx}
+              className='align-self-start'
+              children={this.parseStyleSign(content.value)}
+              style={{
+                fontSize: `${content.fontSize_rem}rem`,
+              }}
+            />
+          );
+        }
       case CONTENT_TYPE.BR:
         return (
           <div
@@ -153,18 +233,6 @@ class MarkdownReaderV2 extends Component {
             />
           );
         }
-      case CONTENT_TYPE.IMPRESS:
-        return (
-          <p
-            key={idx}
-            className='font-weight-bold mb-0'
-            style={{
-              fontSize: `${content.fontSize_rem}rem`,
-            }}
-          >
-            <u>{content.value}</u>
-          </p>
-        );
       default:
         return <p key={idx} children={`Unknown type code ${content.type}`} />;
     }
@@ -174,7 +242,7 @@ class MarkdownReaderV2 extends Component {
     const LEX = {
       TEXT: 0,
       BLANK: 1,
-      IMPRESS: 2,
+      TABLE: 2,
       LINE_BREAK: 3,
     };
     let content_array = [];
@@ -186,25 +254,6 @@ class MarkdownReaderV2 extends Component {
     let start_of_line = true;
     let fontSize_rem = 1;
     let line_value = '';
-
-    const isHeaderSign = (ch) => {
-      const HeaderSigns = [
-        '0',
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-        '-',
-        '+',
-        '*',
-      ];
-      return HeaderSigns.findIndex((sign) => sign === ch) !== -1;
-    };
 
     function setLex(new_lex) {
       lex = new_lex;
@@ -236,10 +285,9 @@ class MarkdownReaderV2 extends Component {
           if (hasBuffer) append_text(popBuffer());
           setLex(LEX.LINE_BREAK);
           break;
-
-        case '#':
-          if (!hasBuffer) setLex(LEX.IMPRESS);
-          else buffer += ch;
+        case '{':
+          if (hasBuffer) append_text(popBuffer());
+          setLex(LEX.TABLE);
           break;
 
         default:
@@ -276,25 +324,6 @@ class MarkdownReaderV2 extends Component {
       }
     };
 
-    const lex_impress = (ch, hasBuffer) => {
-      switch (ch) {
-        case '\n':
-          if (hasBuffer) {
-            content_array.push({
-              idx: idx++,
-              type: CONTENT_TYPE.IMPRESS,
-              fontSize_rem: fontSize_rem,
-              value: popBuffer(),
-            });
-          }
-          setLex(LEX.LINE_BREAK);
-          break;
-
-        default:
-          buffer += ch;
-      }
-    };
-
     const lex_line_break = (ch, hasBuffer) => {
       switch (ch) {
         case '\n':
@@ -308,8 +337,20 @@ class MarkdownReaderV2 extends Component {
             size: buffer.length,
           });
           buffer = '';
+          if (ch === '{') setLex(LEX.TABLE);
+          else setLex(LEX.TEXT);
+      }
+    };
+
+    const lex_table = (ch, hasBuffer) => {
+      switch (ch) {
+        case '}':
+          if (hasBuffer) append_text(popBuffer());
           setLex(LEX.TEXT);
-          lex_text(ch, hasBuffer);
+          break;
+
+        default:
+          buffer += ch;
       }
     };
 
@@ -317,8 +358,8 @@ class MarkdownReaderV2 extends Component {
       const hasBuffer = buffer.length > 0;
       if (lex === LEX.TEXT) lex_text(ch, hasBuffer);
       else if (lex === LEX.BLANK) lex_blank(ch, hasBuffer);
-      else if (lex === LEX.IMPRESS) lex_impress(ch, hasBuffer);
       else if (lex === LEX.LINE_BREAK) lex_line_break(ch, hasBuffer);
+      else if (lex === LEX.TABLE) lex_table(ch, hasBuffer);
 
       if (ch === '\n') {
         start_of_line = true;
@@ -342,7 +383,7 @@ class MarkdownReaderV2 extends Component {
           if (startingTab === 0 && isHeaderSign(startingNonWhitespace)) {
             factor = 1;
           }
-          fontSize_rem = 1.5 - (factor / 3.0) * 0.5;
+          fontSize_rem = 1.5 - (factor / 1.25) * 0.5;
         } else fontSize_rem = 1;
       }
     }
