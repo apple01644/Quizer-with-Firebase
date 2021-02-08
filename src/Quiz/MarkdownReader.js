@@ -100,7 +100,7 @@ class MarkdownReaderV2 extends Component {
     this.setState({ content_array: content_array });
   }
 
-  parseStyleSign(value) {
+  parseStyleSign(value, style) {
     const text = value.split('');
     const styled_text_array = [];
     let buffer = '';
@@ -144,7 +144,7 @@ class MarkdownReaderV2 extends Component {
     if (buffer.length > 0) flushBuffer();
 
     return (
-      <div className='d-flex'>
+      <div className='d-flex' style={style}>
         {styled_text_array.map((styled_text) => {
           let result = <p children={styled_text.value} className='m-0' />;
           if (styled_text.options.italic) result = <em children={result} />;
@@ -233,6 +233,51 @@ class MarkdownReaderV2 extends Component {
             />
           );
         }
+      case CONTENT_TYPE.TABLE: {
+        return (
+          <table>
+            {content.value.split('\n').map((row) => {
+              return (
+                <tr>
+                  {row.split('|').map((block) => {
+                    console.log(block, block[0] === ':');
+                    if (block[0] === ':') {
+                      return (
+                        <td
+                          className='border'
+                          style={{ whiteSpace: 'nowrap' }}
+                          children={this.parseStyleSign(block.substr(1), {
+                            justifyContent: 'left',
+                          })}
+                        />
+                      );
+                    } else if (block[0] === ';') {
+                      return (
+                        <td
+                          className='border'
+                          style={{ whiteSpace: 'nowrap' }}
+                          children={this.parseStyleSign(block.substr(1), {
+                            justifyContent: 'right',
+                          })}
+                        />
+                      );
+                    } else
+                      return (
+                        <td
+                          className='border'
+                          style={{ whiteSpace: 'nowrap' }}
+                          children={this.parseStyleSign(block, {
+                            justifyContent: 'center',
+                          })}
+                        />
+                      );
+                  })}
+                </tr>
+              );
+            })}
+          </table>
+        );
+      }
       default:
         return <p key={idx} children={`Unknown type code ${content.type}`} />;
     }
@@ -345,7 +390,12 @@ class MarkdownReaderV2 extends Component {
     const lex_table = (ch, hasBuffer) => {
       switch (ch) {
         case '}':
-          if (hasBuffer) append_text(popBuffer());
+          content_array.push({
+            idx: idx++,
+            type: CONTENT_TYPE.TABLE,
+            value: buffer,
+          });
+          buffer = '';
           setLex(LEX.TEXT);
           break;
 
