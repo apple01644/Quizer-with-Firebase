@@ -6,7 +6,7 @@ const isNumber = (ch) => {
   return Numbers.findIndex((sign) => sign === ch) !== -1;
 };
 const isHeaderSign = (ch) => {
-  const HeaderSigns = ['-', '+', '*'];
+  const HeaderSigns = ['+', '*'];
   return HeaderSigns.findIndex((sign) => sign === ch) !== -1;
 };
 class FlipButton extends Component {
@@ -147,10 +147,14 @@ class MarkdownReaderV2 extends Component {
       <div className='d-flex' style={style}>
         {styled_text_array.map((styled_text) => {
           let result = <p children={styled_text.value} className='m-0' />;
-          if (styled_text.options.italic) result = <em children={result} />;
-          if (styled_text.options.bold) result = <strong children={result} />;
-          if (styled_text.options.underline) result = <u children={result} />;
-          if (styled_text.options.del) result = <del children={result} />;
+          if (styled_text.options.italic === true)
+            result = <em children={result} />;
+          if (styled_text.options.bold === true)
+            result = <strong children={result} />;
+          if (styled_text.options.underline === true)
+            result = <u children={result} />;
+          if (styled_text.options.del === true)
+            result = <del children={result} />;
 
           return result;
         })}
@@ -430,7 +434,11 @@ class MarkdownReaderV2 extends Component {
         }
         if (startingTab <= 1) {
           let factor = startingTab;
-          if (startingTab === 0 && isHeaderSign(startingNonWhitespace)) {
+          if (
+            startingTab === 0 &&
+            (isHeaderSign(startingNonWhitespace) ||
+              startingNonWhitespace === '-')
+          ) {
             factor = 1;
           }
           fontSize_rem = 1.5 - (factor / 1.25) * 0.5;
