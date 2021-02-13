@@ -145,7 +145,7 @@ class Main extends Component {
         <div className='d-flex pt-2'>
           {this.state.post_data && (
             <Link
-              to={`/?category=${this.state.post_data.category}`}
+              to={`/?category=${this.state.post_data.category}&chapter=${this.state.post_data.chapter}`}
               children={<Button size='sm' children={'Back to list'} />}
             />
           )}

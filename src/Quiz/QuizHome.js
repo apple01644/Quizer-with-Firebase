@@ -69,6 +69,31 @@ class Main extends Component {
       selectedChapterName:
         chapters_of_this_category !== undefined && chapters_of_this_category[0],
     });
+
+    const params = new URLSearchParams(this.props.location.search);
+
+    if (
+      !params.has('chapter') ||
+      chapters_of_this_category.findIndex(
+        (chapter) => chapter === params.get('chapter')
+      ) === -1
+    )
+      this.props.history.push(`/?category=${category_name}`);
+  }
+
+  getDefaultChpaterKey() {
+    const params = new URLSearchParams(this.props.location.search);
+
+    const idx = this.state.chapters_of_this_category.findIndex(
+      (chapter) => chapter === params.get('chapter')
+    );
+    if (idx === -1) {
+      return '0';
+    } else {
+      if (this.state.selectedChapterName === undefined)
+        this.setState({ selectedChapterName: params.get('chapter') });
+      return idx.toString();
+    }
   }
 
   componentDidMount() {
@@ -191,84 +216,86 @@ class Main extends Component {
               data={this.state.seleceted_Quizzes}
             />
           )}
-        <Accordion
-          className='container p-0'
-          defaultActiveKey='0'
-          onSelect={(idx) =>
-            this.setState({
-              selectedChapterName: this.state.chapters_of_this_category[idx],
-            })
-          }
-        >
-          {Object.entries(this.state.post_summary_group_by_chapter).map(
-            ([chapter_name, posts], category_id) => (
-              <Card key={category_id} className='border-0 rounded-0"'>
-                <div className='d-flex flex-row bg-success align-items-center'>
-                  <Form.Check
-                    type='checkbox'
-                    onChange={(e) => {
-                      const query = {};
-                      for (const [post_id] of this.state
-                        .post_summary_group_by_chapter[chapter_name]) {
-                        query[post_id] = e.target.checked;
-                      }
-                      this.setState({ checkstate_of_posts: query });
-                    }}
-                  />
-                  <Accordion.Toggle
-                    as={Button}
-                    variant='transperent'
-                    className='flex-fill p-0 rounded-0 border-0 text-white'
-                    eventKey={category_id.toString()}
-                    children={chapter_name}
-                  />
-                </div>
-                <Accordion.Collapse eventKey={category_id.toString()}>
-                  <Card.Body className='p-0 border-bottom border-secondary'>
-                    {posts.map(([post_id, post_name], post_incr) => (
-                      <Form.Group
-                        controlId={post_id}
-                        key={post_incr}
-                        className={
-                          'd-flex flex-row align-items-center m-0 border-left border-right' +
-                          (post_incr % 2 === 0 ? ' bg-white' : ' bg-light')
+        {this.state.selectedChapterName && (
+          <Accordion
+            className='container p-0'
+            defaultActiveKey={this.getDefaultChpaterKey()}
+            onSelect={(idx) =>
+              this.setState({
+                selectedChapterName: this.state.chapters_of_this_category[idx],
+              })
+            }
+          >
+            {Object.entries(this.state.post_summary_group_by_chapter).map(
+              ([chapter_name, posts], category_id) => (
+                <Card key={category_id} className='border-0 rounded-0"'>
+                  <div className='d-flex flex-row bg-success align-items-center'>
+                    <Form.Check
+                      type='checkbox'
+                      onChange={(e) => {
+                        const query = {};
+                        for (const [post_id] of this.state
+                          .post_summary_group_by_chapter[chapter_name]) {
+                          query[post_id] = e.target.checked;
                         }
-                      >
-                        <Form.Check
-                          type='checkbox'
-                          onChange={(e) => {
-                            this.setState({
-                              checkstate_of_posts: Object.assign(
-                                this.state.checkstate_of_posts,
-                                {
-                                  [post_id]: e.target.checked,
-                                }
-                              ),
-                            });
-                          }}
-                          checked={this.state.checkstate_of_posts[post_id]}
-                        />
-                        <div className='flex-fill'>
-                          <Link
-                            to={`/view?post_id=${post_id}`}
-                            children={
-                              <Button
-                                className='px-0 py-1'
-                                variant='white'
-                                size='sm'
-                                children={post_name}
-                              />
-                            }
+                        this.setState({ checkstate_of_posts: query });
+                      }}
+                    />
+                    <Accordion.Toggle
+                      as={Button}
+                      variant='transperent'
+                      className='flex-fill p-0 rounded-0 border-0 text-white'
+                      eventKey={category_id.toString()}
+                      children={chapter_name}
+                    />
+                  </div>
+                  <Accordion.Collapse eventKey={category_id.toString()}>
+                    <Card.Body className='p-0 border-bottom border-secondary'>
+                      {posts.map(([post_id, post_name], post_incr) => (
+                        <Form.Group
+                          controlId={post_id}
+                          key={post_incr}
+                          className={
+                            'd-flex flex-row align-items-center m-0 border-left border-right' +
+                            (post_incr % 2 === 0 ? ' bg-white' : ' bg-light')
+                          }
+                        >
+                          <Form.Check
+                            type='checkbox'
+                            onChange={(e) => {
+                              this.setState({
+                                checkstate_of_posts: Object.assign(
+                                  this.state.checkstate_of_posts,
+                                  {
+                                    [post_id]: e.target.checked,
+                                  }
+                                ),
+                              });
+                            }}
+                            checked={this.state.checkstate_of_posts[post_id]}
                           />
-                        </div>
-                      </Form.Group>
-                    ))}
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
-            )
-          )}
-        </Accordion>
+                          <div className='flex-fill'>
+                            <Link
+                              to={`/view?post_id=${post_id}`}
+                              children={
+                                <Button
+                                  className='px-0 py-1'
+                                  variant='white'
+                                  size='sm'
+                                  children={post_name}
+                                />
+                              }
+                            />
+                          </div>
+                        </Form.Group>
+                      ))}
+                    </Card.Body>
+                  </Accordion.Collapse>
+                </Card>
+              )
+            )}
+          </Accordion>
+        )}
       </div>
     );
   }
