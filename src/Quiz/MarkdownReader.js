@@ -107,7 +107,13 @@ class MarkdownReaderV2 extends Component {
     this.setState({ blank_array: blank_array });
   }
 
-  parseStyleSign(value, style, blank_array_idx, set_blank_array_idx) {
+  parseStyleSign(
+    value,
+    lineHeight,
+    style,
+    blank_array_idx,
+    set_blank_array_idx
+  ) {
     const text = value.split('');
     const content_array = [];
     let buffer = '';
@@ -135,6 +141,7 @@ class MarkdownReaderV2 extends Component {
         content_array.push({
           value: buffer,
           type: type,
+          fontSize_rem: lineHeight,
           blank_array_idx: blank_array_idx++,
         });
       } else {
@@ -170,8 +177,12 @@ class MarkdownReaderV2 extends Component {
         option_del = !option_del;
       } else if (ch === '<') {
         flushBuffer(CONTENT_TYPE.TEXT);
+        buffer += ch;
       } else if (ch === '>') {
-        if (buffer.length > 0) flushBuffer(CONTENT_TYPE.BLANK);
+        if (buffer.length > 0 && buffer[0] === '<') {
+          buffer = buffer.substr(1);
+          flushBuffer(CONTENT_TYPE.BLANK);
+        } else buffer += ch;
       } else buffer += ch;
     }
     if (buffer.length > 0) flushBuffer(CONTENT_TYPE.TEXT);
@@ -180,10 +191,15 @@ class MarkdownReaderV2 extends Component {
       <div className='d-flex' style={style}>
         {content_array.map((content, idx) => {
           if (content.type === CONTENT_TYPE.BLANK) {
-            return this.buildBlank(idx, content);
+            return this.buildBlank(idx, content, lineHeight);
           } else {
             let result = (
-              <p key={idx} children={content.value} className='m-0' />
+              <p
+                key={idx}
+                children={content.value}
+                style={{ fontSize: `${lineHeight}rem` }}
+                className='m-0'
+              />
             );
             if (content.options.italic === true)
               result = <em key={idx} children={result} />;
@@ -249,15 +265,10 @@ class MarkdownReaderV2 extends Component {
         let blank_array_idx = content.blank_array_idx;
         if (isNumber(content.value[0]) || isHeaderSign(content.value[0])) {
           return (
-            <div
-              key={idx}
-              className='font-weight-bold mb-0'
-              style={{
-                fontSize: `${content.fontSize_rem}rem`,
-              }}
-            >
+            <div key={idx} className='font-weight-bold mb-0'>
               {this.parseStyleSign(
                 content.value,
+                content.fontSize_rem,
                 {},
                 blank_array_idx,
                 (new_blank_array_idx) => (blank_array_idx = new_blank_array_idx)
@@ -271,13 +282,11 @@ class MarkdownReaderV2 extends Component {
               className='align-self-start'
               children={this.parseStyleSign(
                 content.value,
+                content.fontSize_rem,
                 {},
                 blank_array_idx,
                 (new_blank_array_idx) => (blank_array_idx = new_blank_array_idx)
               )}
-              style={{
-                fontSize: `${content.fontSize_rem}rem`,
-              }}
             />
           );
         }
@@ -311,6 +320,7 @@ class MarkdownReaderV2 extends Component {
                             style={{ whiteSpace: 'nowrap' }}
                             children={this.parseStyleSign(
                               block.substr(1),
+                              1,
                               {
                                 justifyContent: 'left',
                               },
@@ -328,6 +338,7 @@ class MarkdownReaderV2 extends Component {
                             style={{ whiteSpace: 'nowrap' }}
                             children={this.parseStyleSign(
                               block.substr(1),
+                              1,
                               {
                                 justifyContent: 'right',
                               },
@@ -345,6 +356,7 @@ class MarkdownReaderV2 extends Component {
                             style={{ whiteSpace: 'nowrap' }}
                             children={this.parseStyleSign(
                               block,
+                              1,
                               {
                                 justifyContent: 'center',
                               },
@@ -370,7 +382,6 @@ class MarkdownReaderV2 extends Component {
   update_content_array() {
     const LEX = {
       TEXT: 0,
-      BLANK: 1,
       TABLE: 2,
       LINE_BREAK: 3,
     };
@@ -389,9 +400,11 @@ class MarkdownReaderV2 extends Component {
 
     function setLex(new_lex) {
       lex = new_lex;
+      start_blank_array_idx = blank_array.length;
     }
     function popBuffer() {
       const data = buffer;
+      small_buffer = '';
       buffer = '';
       return data;
     }
@@ -408,7 +421,6 @@ class MarkdownReaderV2 extends Component {
     }
 
     const lex_text = (ch, hasBuffer) => {
-      if (!hasBuffer) start_blank_array_idx = blank_array.length;
       switch (ch) {
         case '\n':
           if (hasBuffer) append_text(popBuffer());
@@ -467,13 +479,13 @@ class MarkdownReaderV2 extends Component {
             setLex(LEX.TABLE);
           } else {
             buffer = ch;
+            small_buffer = ch;
             setLex(LEX.TEXT);
           }
       }
     };
 
     const lex_table = (ch, hasBuffer) => {
-      if (!hasBuffer) start_blank_array_idx = blank_array.length;
       switch (ch) {
         case '<':
           small_buffer = '<';
@@ -511,6 +523,7 @@ class MarkdownReaderV2 extends Component {
             blank_array_idx: start_blank_array_idx,
           });
           buffer = '';
+          small_buffer = '';
           setLex(LEX.TEXT);
           break;
 
@@ -556,7 +569,6 @@ class MarkdownReaderV2 extends Component {
       }
     }
     if (buffer.length > 0) append_text(popBuffer());
-
     if (this.props.quiz_mode === true) {
       quiz_data.finished = true;
       this.props.setParentState({ quiz_data: quiz_data }, () =>

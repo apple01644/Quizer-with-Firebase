@@ -2,10 +2,6 @@ import { Button, Modal } from 'react-bootstrap';
 import { MarkdownReaderV2 } from './MarkdownReader';
 import { Component, createRef } from 'react';
 
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-
 function shuffleArray(array) {
   let curId = array.length;
   while (0 !== curId) {
@@ -56,14 +52,13 @@ class QuizGame extends Component {
   }
 
   updateData() {
-    return firebase
-      .database()
-      .ref(`/posts/`)
-      .once('value')
-
-      .then((s) => {
-        this.setState({ all_posts: s.val(), deck: [], now_quiz: null });
+    const update_data = async () =>
+      this.setState({
+        all_posts: this.props.posts,
+        deck: [],
+        now_quiz: null,
       });
+    return update_data();
   }
 
   updateDeck(callback) {

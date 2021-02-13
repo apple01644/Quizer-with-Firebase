@@ -16,20 +16,14 @@ class Main extends Component {
   componentDidMount() {
     const params = new URLSearchParams(this.props.location.search);
     const post_id = params.get('post_id');
-    firebase
-      .database()
-      .ref(`/posts/${post_id}`)
-      .once('value')
-      .then((s) => {
-        const post_db = s.val();
-        if (post_db === null) {
-          alert('잘못된 post_id 입니다. Home으로 이동합니다.');
-          this.props.history.push('/');
-        } else {
-          this.setState(post_db);
-          this.setState({ post_id: post_id });
-        }
-      });
+    const post_db = this.props.posts[post_id];
+    if (post_db === undefined) {
+      alert('잘못된 post_id 입니다. Home으로 이동합니다.');
+      this.props.history.push('/');
+    } else {
+      this.setState(post_db);
+      this.setState({ post_id: post_id });
+    }
   }
 
   render() {

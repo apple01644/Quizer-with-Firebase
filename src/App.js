@@ -64,17 +64,37 @@ class App extends Component {
   constructor(props) {
     super(props);
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    this.state = { currentUser: firebase.auth().currentUser };
+    this.state = { currentUser: firebase.auth().currentUser, posts: [] };
+  }
+
+  componentDidMount() {
+    firebase
+      .database()
+      .ref('/posts/')
+      .on('value', (s) => {
+        this.setState({ posts: s.val() });
+      });
   }
 
   render() {
     const common_properties = {
       isAuth: this.state.currentUser !== null,
       User: this.state.currentUser,
+      posts: this.state.posts,
     };
+    if (this.state.posts.length === 0) return <>Loading...</>;
     return (
       <Router>
         <div className='App'>
+          <TopMenu
+            {...common_properties}
+            onChange={() => {
+              this.setState({ currentUser: firebase.auth().currentUser });
+              if (this.state.currentUser !== null) {
+                firebase.auth().currentUser.getIdToken();
+              }
+            }}
+          />
           <Switch>
             <Route
               path='/new_post'
@@ -89,15 +109,6 @@ class App extends Component {
               children={<QuizView {...common_properties} />}
             />
             <Route path='/'>
-              <TopMenu
-                {...common_properties}
-                onChange={() => {
-                  this.setState({ currentUser: firebase.auth().currentUser });
-                  if (this.state.currentUser !== null) {
-                    firebase.auth().currentUser.getIdToken();
-                  }
-                }}
-              />
               <QuizHome {...common_properties} />
             </Route>
           </Switch>

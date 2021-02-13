@@ -4,10 +4,6 @@ import { Link, withRouter } from 'react-router-dom';
 
 import { QuizGame } from './';
 
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-
 class Main extends Component {
   constructor(props) {
     super(props);
@@ -34,7 +30,7 @@ class Main extends Component {
     });
     const chapter_unordered_set = {};
     const checkstate_of_posts = {};
-    const posts_of_this_category = Object.entries(this.state.posts).filter(
+    const posts_of_this_category = Object.entries(this.props.posts).filter(
       ([post_id, post]) => {
         return post.category === category_name;
       }
@@ -59,6 +55,17 @@ class Main extends Component {
         );
       });
     const chapters_of_this_category = Object.keys(chapter_ordered_set);
+    const params = new URLSearchParams(this.props.location.search);
+    let selected_chapter_name = undefined;
+
+    if (
+      params.has('chapter') &&
+      chapters_of_this_category.findIndex(
+        (chapter) => chapter === params.get('chapter')
+      ) !== -1
+    ) {
+      selected_chapter_name = params.get('chapter');
+    } else this.props.history.push(`/?category=${category_name}`);
 
     this.setState({
       chapters_of_this_category: chapters_of_this_category,
@@ -67,18 +74,10 @@ class Main extends Component {
       checkstate_of_posts: checkstate_of_posts,
       category_name: category_name,
       selectedChapterName:
-        chapters_of_this_category !== undefined && chapters_of_this_category[0],
+        selected_chapter_name ||
+        (chapters_of_this_category !== undefined &&
+          chapters_of_this_category[0]),
     });
-
-    const params = new URLSearchParams(this.props.location.search);
-
-    if (
-      !params.has('chapter') ||
-      chapters_of_this_category.findIndex(
-        (chapter) => chapter === params.get('chapter')
-      ) === -1
-    )
-      this.props.history.push(`/?category=${category_name}`);
   }
 
   getDefaultChpaterKey() {
@@ -87,41 +86,30 @@ class Main extends Component {
     const idx = this.state.chapters_of_this_category.findIndex(
       (chapter) => chapter === params.get('chapter')
     );
-    if (idx === -1) {
-      return '0';
-    } else {
-      if (this.state.selectedChapterName === undefined)
-        this.setState({ selectedChapterName: params.get('chapter') });
-      return idx.toString();
-    }
+    console.log('idx', idx);
+    if (idx === -1) return '0';
+    else return idx.toString();
   }
 
   componentDidMount() {
-    firebase
-      .database()
-      .ref('/posts/')
-      .once('value')
-      .then((s) => {
-        const posts_db = s.val();
-        const category_set = {};
-        Object.entries(posts_db).forEach(([post_id, post], incr) => {
-          const category = post.category;
-          category_set[category] = null;
-        });
-        this.setState({
-          posts: posts_db,
-          categories: Object.keys(category_set),
-        });
+    const category_set = {};
+    Object.entries(this.props.posts).forEach(([post_id, post], incr) => {
+      const category = post.category;
+      category_set[category] = null;
+    });
+    this.setState({
+      categories: Object.keys(category_set),
+    });
 
-        const params = new URLSearchParams(this.props.location.search);
-        if (
-          !params.has('category') ||
-          !(params.get('category') in category_set)
-        ) {
-          this.props.history.push(`/`);
-          this.selectCategory('미분류');
-        } else this.selectCategory(params.get('category'));
-      });
+    const params = new URLSearchParams(this.props.location.search);
+    if (
+      !params.has('category') ||
+      !(params.get('category') in category_set) ||
+      params.get('category') === '미분류'
+    ) {
+      this.props.history.push(`/`);
+      this.selectCategory('미분류');
+    } else this.selectCategory(params.get('category'));
   }
 
   handleChange = (e) => {
@@ -214,6 +202,7 @@ class Main extends Component {
               show={this.state.show_QuizGame}
               handleClose={() => this.setState({ show_QuizGame: false })}
               data={this.state.seleceted_Quizzes}
+              posts={this.props.posts}
             />
           )}
         {this.state.selectedChapterName && (

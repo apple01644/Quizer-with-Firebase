@@ -5,8 +5,6 @@ import { QuizGame } from './';
 import { Link, withRouter } from 'react-router-dom';
 
 import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
 
 class Main extends Component {
   constructor(props) {
@@ -17,7 +15,7 @@ class Main extends Component {
       posts_count: 0,
       post_index_in_list: 0,
 
-      post_data: null,
+      post_data: undefined,
       post_id: null,
 
       prev_post_id: null,
@@ -63,13 +61,12 @@ class Main extends Component {
     });
   }
 
-  setNextPage() {
+  setNextPage(post_index_in_list) {
     const prev_post_id = this.state.posts_list[
-      (this.state.post_index_in_list - 1 + this.state.posts_count) %
-        this.state.posts_count
+      (post_index_in_list - 1 + this.state.posts_count) % this.state.posts_count
     ];
     const next_post_id = this.state.posts_list[
-      (this.state.post_index_in_list + 1) % this.state.posts_count
+      (post_index_in_list + 1) % this.state.posts_count
     ];
 
     this.setState({
@@ -86,53 +83,55 @@ class Main extends Component {
 
   componentDidUpdate(prevProps, prevState, sanpshot) {
     if (
-      this.state.post_data === null ||
+      this.state.post_data === undefined ||
       prevState.post_id !== this.state.post_id
     ) {
-      firebase
-        .database()
-        .ref(`/posts/${this.state.post_id}`)
-        .once('value')
-        .then((s) => {
-          const post_db = s.val();
-          if (post_db === null) {
-            alert('잘못된 post_id 입니다. Home으로 이동합니다.');
-            this.props.history.push('/');
-          } else {
-            this.setState({
-              post_data: post_db,
-            });
-            if (this.state.posts_count !== 0) {
-              this.setState({
-                post_index_in_list: this.state.posts_list.findIndex(
-                  (e) => e === this.state.post_id
-                ),
-              });
-              this.setNextPage();
-            }
-          }
+      const post_db = this.props.posts[this.state.post_id];
+      if (post_db === undefined) {
+        alert('잘못된 post_id 입니다. Home으로 이동합니다.');
+        this.props.history.push('/');
+      } else {
+        this.setState({
+          post_data: post_db,
         });
+        if (this.state.posts_count !== 0) {
+          this.setState({
+            post_index_in_list: this.state.posts_list.findIndex(
+              (e) => e === this.state.post_id
+            ),
+          });
+        }
+      }
     }
     if (
-      prevState.post_data === null ||
-      (this.state.post_data !== null &&
+      (prevState.post_data === undefined &&
+        this.state.post_data !== undefined) ||
+      (prevState.post_data !== undefined &&
         prevState.post_data.category !== this.state.post_data.category)
     ) {
-      firebase
-        .database()
-        .ref(`/posts/`)
-        .once('value')
-        .then((s) => {
-          this.setPageList(s.val());
-        });
+      this.setPageList(this.props.posts);
     }
-    if (prevState.posts_count === 0 && this.state.posts_count !== 0) {
-      this.setNextPage();
+    if (
+      (prevState.posts_count === 0 && this.state.posts_count !== 0) ||
+      prevState.post_index_in_list !== this.state.post_index_in_list
+    ) {
+      this.setNextPage(this.state.post_index_in_list);
     }
   }
 
   render() {
-    if (this.state.post_data === null) return <>Loading...</>;
+    if (this.state.post_data === undefined) return <>Loading...</>;
+    let jsx_markdown_reader_v2 = undefined;
+    try {
+      jsx_markdown_reader_v2 = (
+        <MarkdownReaderV2
+          data={this.state.post_data.md}
+          ref={this.markdown_reader}
+        />
+      );
+    } catch (e) {
+      jsx_markdown_reader_v2 = e;
+    }
     return (
       <>
         {this.state.show_QuizGame !== undefined && (
@@ -140,6 +139,7 @@ class Main extends Component {
             show={this.state.show_QuizGame}
             handleClose={() => this.setState({ show_QuizGame: false })}
             data={[this.state.post_id]}
+            posts={this.props.posts}
           />
         )}
         <div className='d-flex pt-2'>
@@ -209,46 +209,46 @@ class Main extends Component {
         <div className='m-3 mh-100 align-self-stretch'>
           <Card className='mh-100'>
             <Card.Body>
-              <p
-                className='mb-0'
-                children={`${this.state.post_data.category}-${this.state.post_data.chapter}`}
-              />
-              <Card.Title
-                as='p'
-                className='font-weight-bold mb-2'
-                children={this.state.post_data.title}
-              />
-              <MarkdownReaderV2
-                data={this.state.post_data.md}
-                ref={this.markdown_reader}
-              />
+              <div className='d-flex flex-row flex-fill justify-content-between'>
+                <Link to={`/view?post_id=${this.state.prev_post_id}`}>
+                  <Button
+                    className='mt-2 ml-2'
+                    variant='secondary'
+                    size='sm'
+                    children={'◀'}
+                    onClick={() => {
+                      this.setState({ post_id: this.state.prev_post_id });
+                      window.scrollY = 0;
+                    }}
+                  />
+                </Link>
+                <div>
+                  <p
+                    className='mb-0'
+                    children={`${this.state.post_data.category}-${this.state.post_data.chapter}`}
+                  />
+                  <Card.Title
+                    as='p'
+                    className='font-weight-bold mb-2'
+                    children={this.state.post_data.title}
+                  />
+                </div>
+                <Link to={`/view?post_id=${this.state.next_post_id}`}>
+                  <Button
+                    className='mt-2 ml-2'
+                    variant='secondary'
+                    size='sm'
+                    children={'▶'}
+                    onClick={() => {
+                      this.setState({ post_id: this.state.next_post_id });
+                      window.scrollY = 0;
+                    }}
+                  />
+                </Link>
+              </div>
+              {jsx_markdown_reader_v2}
             </Card.Body>
           </Card>
-
-          <Link to={`/view?post_id=${this.state.prev_post_id}`}>
-            <Button
-              className='mt-2 ml-2'
-              variant='secondary'
-              size='sm'
-              children={'◀'}
-              onClick={() => {
-                this.setState({ post_id: this.state.prev_post_id });
-                window.scrollY = 0;
-              }}
-            />
-          </Link>
-          <Link to={`/view?post_id=${this.state.next_post_id}`}>
-            <Button
-              className='mt-2 ml-2'
-              variant='secondary'
-              size='sm'
-              children={'▶'}
-              onClick={() => {
-                this.setState({ post_id: this.state.next_post_id });
-                window.scrollY = 0;
-              }}
-            />
-          </Link>
         </div>
       </>
     );
