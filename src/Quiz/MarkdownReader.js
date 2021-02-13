@@ -116,6 +116,9 @@ class MarkdownReaderV2 extends Component {
     let option_underline = false;
     let option_del = false;
 
+    if (blank_array_idx === undefined && value.search('<') !== -1)
+      throw blank_array_idx;
+
     const flushBuffer = (type) => {
       if (type === CONTENT_TYPE.TEXT) {
         content_array.push({
@@ -243,6 +246,7 @@ class MarkdownReaderV2 extends Component {
   buildJSX(idx, content) {
     switch (content.type) {
       case CONTENT_TYPE.TEXT:
+        let blank_array_idx = content.blank_array_idx;
         if (isNumber(content.value[0]) || isHeaderSign(content.value[0])) {
           return (
             <div
@@ -252,7 +256,12 @@ class MarkdownReaderV2 extends Component {
                 fontSize: `${content.fontSize_rem}rem`,
               }}
             >
-              {this.parseStyleSign(content.value)}
+              {this.parseStyleSign(
+                content.value,
+                {},
+                blank_array_idx,
+                (new_blank_array_idx) => (blank_array_idx = new_blank_array_idx)
+              )}
             </div>
           );
         } else {
@@ -260,7 +269,12 @@ class MarkdownReaderV2 extends Component {
             <span
               key={idx}
               className='align-self-start'
-              children={this.parseStyleSign(content.value)}
+              children={this.parseStyleSign(
+                content.value,
+                {},
+                blank_array_idx,
+                (new_blank_array_idx) => (blank_array_idx = new_blank_array_idx)
+              )}
               style={{
                 fontSize: `${content.fontSize_rem}rem`,
               }}
@@ -389,15 +403,13 @@ class MarkdownReaderV2 extends Component {
         value: text,
         start_of_line: start_of_line,
         fontSize_rem: fontSize_rem,
+        blank_array_idx: start_blank_array_idx,
       });
     }
 
     const lex_text = (ch, hasBuffer) => {
+      if (!hasBuffer) start_blank_array_idx = blank_array.length;
       switch (ch) {
-        case '<':
-          if (hasBuffer) append_text(popBuffer());
-          setLex(LEX.BLANK);
-          break;
         case '\n':
           if (hasBuffer) append_text(popBuffer());
           setLex(LEX.LINE_BREAK);
@@ -407,17 +419,9 @@ class MarkdownReaderV2 extends Component {
           small_buffer = '';
           setLex(LEX.TABLE);
           break;
-
-        default:
-          if (ch !== '\\') buffer += ch;
-      }
-    };
-
-    const lex_blank = (ch, hasBuffer) => {
-      switch (ch) {
         case '>':
-          if (hasBuffer) {
-            const value = popBuffer();
+          if (small_buffer[0] === '<') {
+            const value = small_buffer.substr(1);
             if (this.props.quiz_mode === true) {
               quiz_data[blank_array.length] = {
                 user_value: '',
@@ -426,23 +430,22 @@ class MarkdownReaderV2 extends Component {
               blank_ref_set[blank_array.length] = createRef();
             }
 
-            content_array.push({
-              idx: idx++,
-              blank_array_idx: blank_array.length,
-              type: CONTENT_TYPE.BLANK,
-              fontSize_rem: fontSize_rem,
-              value: value,
-            });
             blank_array.push({
               idx: blank_array.length,
               value: value,
               hide: false,
             });
           }
-          setLex(LEX.TEXT);
+          buffer += ch;
+          small_buffer = '';
+          break;
+        case '<':
+          small_buffer = '<';
+          buffer += ch;
           break;
         default:
           if (ch !== '\\') buffer += ch;
+          small_buffer += ch;
       }
     };
 
@@ -519,7 +522,6 @@ class MarkdownReaderV2 extends Component {
     for (const ch of this.props.data) {
       const hasBuffer = buffer.length > 0;
       if (lex === LEX.TEXT) lex_text(ch, hasBuffer);
-      else if (lex === LEX.BLANK) lex_blank(ch, hasBuffer);
       else if (lex === LEX.LINE_BREAK) lex_line_break(ch, hasBuffer);
       else if (lex === LEX.TABLE) lex_table(ch, hasBuffer);
 
