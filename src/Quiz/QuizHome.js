@@ -139,6 +139,14 @@ class Main extends Component {
     return quizzes.length !== 0;
   }
 
+  selectAllQuizzes() {
+    const query = {};
+    for (const [post_id] of this.state.posts_of_this_category) {
+      query[post_id] = true;
+    }
+    this.setState({ checkstate_of_posts: query });
+  }
+
   render() {
     const crud_bar = (
       <div className='mb-2'>
@@ -159,6 +167,13 @@ class Main extends Component {
               children={'New'}
             />
           }
+        />
+        <Button
+          className='mt-2 ml-2'
+          size='sm'
+          variant='secondary'
+          onClick={() => this.selectAllQuizzes()}
+          children={'Select all'}
         />
         <Button
           className='mt-2 ml-2'
