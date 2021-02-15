@@ -117,6 +117,7 @@ class Main extends Component {
                   as='textarea'
                   rows={25}
                   placeholder='여기에 내용 입력'
+                  name='quizer_with_firebase_new_post'
                   onChange={handleChange}
                 />
               </Form.Group>
