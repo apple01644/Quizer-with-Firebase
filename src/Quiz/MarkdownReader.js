@@ -570,6 +570,10 @@ class MarkdownReaderV2 extends Component {
     }
     if (buffer.length > 0) append_text(popBuffer());
     if (this.props.quiz_mode === true) {
+      if (blank_array.length === 0) {
+        this.nextQuiz();
+        return;
+      }
       quiz_data.finished = true;
       this.props.setParentState({ quiz_data: quiz_data }, () =>
         this.props.onUpdateRealAnswer()
