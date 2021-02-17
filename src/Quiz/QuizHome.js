@@ -86,7 +86,6 @@ class Main extends Component {
     const idx = this.state.chapters_of_this_category.findIndex(
       (chapter) => chapter === params.get('chapter')
     );
-    console.log('idx', idx);
     if (idx === -1) return '0';
     else return idx.toString();
   }

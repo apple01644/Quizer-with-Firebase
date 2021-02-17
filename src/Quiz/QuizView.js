@@ -206,9 +206,9 @@ class Main extends Component {
           />
         </div>
         <br />
-        <div className='m-3 mh-100 align-self-stretch'>
-          <Card className='mh-100'>
-            <Card.Body>
+        <div className='my-3 mh-100 align-self-stretch'>
+          <Card className='mh-100 border-none'>
+            <Card.Body className='p-0'>
               <div className='d-flex flex-row flex-fill justify-content-between'>
                 <Link to={`/view?post_id=${this.state.prev_post_id}`}>
                   <Button

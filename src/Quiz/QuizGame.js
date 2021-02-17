@@ -193,9 +193,9 @@ class QuizGame extends Component {
         centered={true}
         animation={false}
         style={{ maxWidth: 'none' }}
-        dialogClassName='modal-90w mx-3 mw-100'
+        dialogClassName='modal-100w m-0 mw-100'
       >
-        <Modal.Header className='flex-column text-center'>
+        <Modal.Header className='flex-column text-center p-1'>
           {this.state.now_quiz && (
             <p
               className='mb-0'
@@ -213,10 +213,10 @@ class QuizGame extends Component {
             }
           />
         </Modal.Header>
-        <Modal.Body className='px-3 py-2'>
+        <Modal.Body className='px-0 py-0'>
           {this.state.now_quiz !== null && (
             <MarkdownReaderV2
-              style={{ overflowY: 'scroll', height: 'calc(100vh - 26rem)' }}
+              style={{ overflowY: 'scroll', height: 'calc(100vh - 13.9rem)' }}
               data={this.state.now_quiz && this.state.now_quiz.md}
               ref={this.markdown_reader}
               quiz_mode={true}
@@ -263,8 +263,9 @@ class QuizGame extends Component {
               style={{ width: 'auto' }}
               ref={this.user_answer_field}
               onChange={(e) => this.onChangeUserAnswer(e)}
-              onKeyPress={(e) => {
-                if (e.key === '.') {
+              onInput={(e) => {
+                console.log(e);
+                if (e.nativeEvent.data === '.') {
                   e.preventDefault();
                   this.addHint();
                 }

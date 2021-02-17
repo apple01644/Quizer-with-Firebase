@@ -16,7 +16,7 @@ class FlipButton extends Component {
         as='p'
         size='sm'
         style={Object.assign(
-          { boxShadow: 'none', borderColor: '#CCCCCC' },
+          { boxShadow: 'none', borderColor: '#CCCCCC', whiteSpace: 'nowrap' },
           this.props.style
         )}
         className={
@@ -60,7 +60,10 @@ class QuizButton extends Component {
         ref={this.props.ParentState.blank_ref_set[this.props.blank_array_idx]}
         variant={this.isSolved() ? 'outline-success' : 'outline-danger'}
         size='sm'
-        style={Object.assign({ boxShadow: 'none' }, this.props.style)}
+        style={Object.assign(
+          { boxShadow: 'none', whiteSpace: 'nowrap' },
+          this.props.style
+        )}
         className={`align-self-center p-0 m-0 ${
           this.props.user_value !== this.props.value
             ? 'text-danger'
@@ -197,7 +200,7 @@ class MarkdownReaderV2 extends Component {
               <p
                 key={idx}
                 children={content.value}
-                style={{ fontSize: `${lineHeight}rem` }}
+                style={{ fontSize: `${lineHeight}rem`, whiteSpace: 'nowrap' }}
                 className='m-0'
               />
             );
@@ -677,10 +680,7 @@ class MarkdownReaderV2 extends Component {
             'px-3 py-2 border rounded w-100 text-left d-flex flex-row flex-wrap align-content-start ' +
             (this.props.className || '')
           }
-          style={Object.assign(
-            { whiteSpace: 'break-spaces' },
-            this.props.style
-          )}
+          style={Object.assign({ overflowX: 'scroll' }, this.props.style)}
         >
           {this.state.content_array.map((content, idx) =>
             this.buildJSX(idx, content)
