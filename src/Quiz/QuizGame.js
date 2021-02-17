@@ -216,7 +216,7 @@ class QuizGame extends Component {
         <Modal.Body className='px-3 py-2'>
           {this.state.now_quiz !== null && (
             <MarkdownReaderV2
-              style={{ overflowY: 'scroll', height: '41rem' }}
+              style={{ overflowY: 'scroll', height: 'calc(100vh - 26rem)' }}
               data={this.state.now_quiz && this.state.now_quiz.md}
               ref={this.markdown_reader}
               quiz_mode={true}
