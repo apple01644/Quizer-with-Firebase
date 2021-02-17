@@ -168,8 +168,9 @@ class QuizGame extends Component {
     this.user_answer_field.current.value = '';
     this.setState({ answer: '', hint: '' });
     const quiz_data = this.state.quiz_data;
-    quiz_data[this.state.quiz_data.cursor].user_value =
-      quiz_data[this.state.quiz_data.cursor].value;
+    if (this.state.quiz_data.cursor !== undefined)
+      quiz_data[this.state.quiz_data.cursor].user_value =
+        quiz_data[this.state.quiz_data.cursor].value;
     this.setState({ quiz_data: quiz_data });
     if (this.markdown_reader.current.nextQuiz() === true) {
       this.setState({ hint: this.maskedAnswer() });

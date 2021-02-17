@@ -656,12 +656,13 @@ class MarkdownReaderV2 extends Component {
       prevProps.quiz_data !== undefined &&
       this.state.prev_cursor !== this.props.quiz_data.cursor
     ) {
-      this.state.blank_ref_set[
-        this.props.quiz_data.cursor
-      ].current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
+      if (this.props.quiz_data.cursor !== undefined)
+        this.state.blank_ref_set[
+          this.props.quiz_data.cursor
+        ].current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
 
       this.setState({ prev_cursor: this.props.quiz_data.cursor });
     }
