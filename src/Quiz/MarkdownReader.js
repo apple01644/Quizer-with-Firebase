@@ -200,7 +200,10 @@ class MarkdownReaderV2 extends Component {
               <p
                 key={idx}
                 children={content.value}
-                style={{ fontSize: `${lineHeight}rem`, whiteSpace: 'nowrap' }}
+                style={{
+                  fontSize: `${lineHeight}rem`,
+                  whiteSpace: 'break-spaces',
+                }}
                 className='m-0'
               />
             );
@@ -299,7 +302,7 @@ class MarkdownReaderV2 extends Component {
             key={idx}
             className='mr-auto'
             style={{
-              width: 'calc(100vw - 6.5rem)',
+              width: 'calc(100vw - 2rem)',
               marginBottom: `${content.size}rem`,
             }}
           />
