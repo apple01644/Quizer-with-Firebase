@@ -151,7 +151,8 @@ class QuizGame extends Component {
       } else {
         if (real_answer[idx] === ' ') {
           new_hint += '.';
-          new_user_answer += real_answer[idx];
+          if (new_user_answer[new_user_answer.length - 1] !== ' ')
+            new_user_answer += real_answer[idx];
         } else if (add_flag) {
           new_hint += real_answer[idx];
           new_user_answer += real_answer[idx];
@@ -160,7 +161,7 @@ class QuizGame extends Component {
       }
     });
     this.setState({ hint: new_hint });
-    this.user_answer_field.current.value = new_user_answer;
+    this.user_answer_field.current.value = new_user_answer.trimEnd();
     this.onChangeUserAnswer({ target: this.user_answer_field.current });
   }
 
@@ -223,6 +224,10 @@ class QuizGame extends Component {
               quiz_data={this.state.quiz_data}
               onUpdateRealAnswer={() => this.onUpdateRealAnswer()}
               setParentState={(d, callback) => this.setState(d, callback)}
+              editing_value={
+                this.user_answer_field.current &&
+                this.user_answer_field.current.value
+              }
             />
           )}
         </Modal.Body>
@@ -264,7 +269,6 @@ class QuizGame extends Component {
               ref={this.user_answer_field}
               onChange={(e) => this.onChangeUserAnswer(e)}
               onInput={(e) => {
-                console.log(e);
                 if (e.nativeEvent.data === '.') {
                   e.preventDefault();
                   this.addHint();

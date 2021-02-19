@@ -44,8 +44,14 @@ class QuizButton extends Component {
   formatAnswer() {
     let result = this.props.user_value;
     if (result === undefined) result = '';
-    while (result.length < this.props.value.length)
-      result += this.props.value[result.length] === ' ' ? '.' : '●';
+    while (result.length < this.props.value.length) {
+      if (
+        this.props.value[result.length] ===
+        this.props.editing_value[result.length]
+      )
+        result += this.props.value[result.length];
+      else result += this.props.value[result.length] === ' ' ? '.' : '●';
+    }
     return result;
   }
 
@@ -72,11 +78,7 @@ class QuizButton extends Component {
         onClick={() => {
           this.props.setCursor(this.props.blank_array_idx);
         }}
-        children={
-          this.isSolved()
-            ? this.props.value
-            : this.formatAnswer(this.props.value)
-        }
+        children={this.isSolved() ? this.props.value : this.formatAnswer()}
       />
     );
   }
@@ -248,6 +250,7 @@ class MarkdownReaderV2 extends Component {
           setParentState={(e) => this.setState(e)}
           value={content.value}
           user_value={this.props.quiz_data[content.blank_array_idx].user_value}
+          editing_value={this.props.editing_value}
           selected={content.blank_array_idx === this.props.quiz_data.cursor}
           setCursor={(blank_array_idx) => {
             const quiz_data = this.props.quiz_data;
