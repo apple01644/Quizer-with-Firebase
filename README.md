@@ -1,4 +1,11 @@
+# Read-N-Save
+![alt](1.png "")
+![alt](2.png "")
+![alt](3.png "")
+![alt](4.png "")
+
 # 개요
+기계적인 학습을 도와주는 프로그램
 
 0. 사전준비
 1. Firebase 프로젝트 생성
